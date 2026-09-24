@@ -28,15 +28,13 @@ const Layout = () => {
     <div className="flex h-dvh bg-stone-50">
       <Sidebar
         isCollapsed={isCollapsed}
-        mobileOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
+        isMobileOpen={mobileOpen}
+        closeMobileMenu={() => setMobileOpen(false)}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar
-          onToggleSidebar={handleToggleSidebar}
-          isCollapsed={isCollapsed}
-          mobileOpen={mobileOpen}
+          toggleSidebar={handleToggleSidebar}
         />
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
           <Outlet />
