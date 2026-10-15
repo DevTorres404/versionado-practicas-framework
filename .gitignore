@@ -3,3 +3,8 @@ node_modules
 .DS_Store
 
 .atl
+
+# Jupyter Notebooks & Academic Tasks
+*.ipynb
+.ipynb_checkpoints/
+odd/
