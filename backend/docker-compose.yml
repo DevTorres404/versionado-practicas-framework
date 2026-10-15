@@ -1,0 +1,65 @@
+# PostgreSQL 16 & Redis for MultiCatálogo (Fase 2 & Fase 3).
+# Run from the repository root:
+#   docker compose -f backend/docker-compose.yml up -d
+# Values are interpolated from backend/.env (same keys used by config/db.go and config/redis.go).
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: multicatalogo-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-multicatalogo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-multicatalogo}
+      POSTGRES_DB: ${POSTGRES_DB:-multicatalogo}
+    ports:
+      # Host port can be remapped via POSTGRES_PORT in backend/.env if 5432 is taken.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Schema + seed executed on first boot of the volume.
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-multicatalogo} -d ${POSTGRES_DB:-multicatalogo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  redis:
+    image: redis:alpine
+    container_name: multicatalogo-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: multicatalogo-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-multicatalogo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-multicatalogo}
+      POSTGRES_DB: ${POSTGRES_DB:-multicatalogo}
+      POSTGRES_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+volumes:
+  pgdata:
+  redisdata:

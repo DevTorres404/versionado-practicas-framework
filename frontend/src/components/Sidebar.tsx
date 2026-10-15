@@ -2,19 +2,17 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-// NUEVO: Agregamos la función a la interfaz de props
 interface SidebarProps {
   isCollapsed: boolean;
   isMobileOpen: boolean;
   closeMobileMenu: () => void;
 }
 
-// Definimos las opciones de navegación según el rol (Tema 5)
 interface NavItem {
   to: string;
   label: string;
   title: string;
-  icon: string; // ruta del icono SVG (stroke)
+  icon: string;
   soloAdmin?: boolean;
 }
 
@@ -51,48 +49,49 @@ const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) =
   const { user } = useAuth();
   const { pathname } = useLocation();
 
-  // Filtramos las opciones según el rol del usuario
   const items = NAV_ITEMS.filter((item) => !item.soloAdmin || user?.rol === "admin");
 
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-50 transform bg-indigo-950 text-white flex flex-col transition-all duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 transform bg-slate-900 border-r border-white/10 shadow-2xl text-white flex flex-col transition-all duration-300 ease-in-out
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         w-64
         md:relative md:translate-x-0
         ${isCollapsed ? "md:w-20" : "md:w-64"}
       `}
     >
-      <div className={`p-4 md:p-6 text-xl font-bold border-b border-indigo-900 flex items-center ${isCollapsed ? 'md:justify-center' : 'justify-start'} whitespace-nowrap`}>
-        <span className="md:hidden">MultiCatálogo</span>
-        <span className="hidden md:inline">{isCollapsed ? "MC" : "MultiCatálogo"}</span>
+      {/* Decorative gradient blur in background */}
+      <div className="absolute top-0 left-0 w-full h-40 bg-indigo-500/20 blur-3xl rounded-full z-0 pointer-events-none"></div>
+
+      <div className={`relative z-10 p-5 md:p-6 text-xl font-extrabold flex items-center ${isCollapsed ? 'md:justify-center' : 'justify-start'} whitespace-nowrap`}>
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center mr-3 shadow-lg flex-shrink-0">
+          <span className="text-sm">MC</span>
+        </div>
+        <span className={`tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 md:hidden`}>MultiCatálogo</span>
+        <span className={`tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 hidden md:inline ${isCollapsed ? 'hidden md:hidden' : ''}`}>MultiCatálogo</span>
       </div>
 
-      <nav className="flex-1 p-3 space-y-2 overflow-y-auto">
+      <nav className="relative z-10 flex-1 p-4 space-y-2 overflow-y-auto">
         {items.map((item) => {
-          // Resaltamos la opción activa según la ruta actual
-          const esActivo =
-            item.to === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.to);
+          const esActivo = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
 
           return (
             <Link
               key={item.to}
               to={item.to}
               onClick={closeMobileMenu}
-              className={`flex items-center gap-3 p-3 rounded transition ${
+              className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-200 group ${
                 esActivo
-                  ? "bg-indigo-600 text-white"
-                  : "hover:bg-indigo-900"
+                  ? "bg-indigo-600 shadow-md shadow-indigo-500/30 text-white"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
               } ${isCollapsed ? 'md:justify-center' : ''}`}
               title={item.title}
             >
-              <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-6 h-6 flex-shrink-0 transition-transform duration-200 ${esActivo ? '' : 'group-hover:scale-110'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
               </svg>
-              <span className={`whitespace-nowrap ${isCollapsed ? 'md:hidden' : ''}`}>
+              <span className={`font-medium tracking-wide ${isCollapsed ? 'md:hidden' : ''}`}>
                 {item.label}
               </span>
             </Link>
@@ -100,13 +99,17 @@ const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) =
         })}
       </nav>
 
-      <div className="p-3 border-t border-indigo-900 text-xs text-indigo-200">
+      <div className="relative z-10 p-4 border-t border-white/10 m-2 rounded-xl bg-white/5 backdrop-blur-md">
         {isCollapsed ? (
-          <p className="text-center uppercase">{user?.rol}</p>
+          <p className="text-center text-[10px] uppercase font-bold tracking-widest text-indigo-300">{user?.rol}</p>
         ) : (
-          <p>
-            Conectado como <span className="font-semibold uppercase">{user?.rol}</span>
-          </p>
+          <div className="flex flex-col">
+            <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Perfil Activo</p>
+            <p className="text-sm font-bold text-white flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+              <span className="uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-fuchsia-400">{user?.rol}</span>
+            </p>
+          </div>
         )}
       </div>
     </aside>

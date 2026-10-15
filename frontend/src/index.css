@@ -1,1 +1,49 @@
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-xl;
+  }
+  .glass-dark {
+    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+  .glass-panel {
+    @apply bg-white/40 backdrop-blur-md border border-white/50 shadow-lg;
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: float 6s ease-in-out 3s infinite;
+  }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}

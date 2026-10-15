@@ -25,18 +25,27 @@ const Layout = () => {
   };
 
   return (
-    <div className="flex h-dvh bg-stone-50">
+    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       <Sidebar
         isCollapsed={isCollapsed}
         isMobileOpen={mobileOpen}
         closeMobileMenu={() => setMobileOpen(false)}
       />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <Navbar
           toggleSidebar={handleToggleSidebar}
         />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50">
           <Outlet />
         </main>
       </div>

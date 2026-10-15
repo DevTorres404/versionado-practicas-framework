@@ -2,16 +2,65 @@
 package main
 
 import (
+	// Importamos 'log' para mensajes de arranque/apagado y 'os'/'signal' para el shutdown.
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	// Importamos el framework principal Fiber.
 	"github.com/gofiber/fiber/v2"
 	// Importamos el middleware CORS para gestionar la seguridad entre distintos puertos/dominios.
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	// Importamos la configuración y el pool de conexiones a PostgreSQL.
+	"multicatalogo-backend/config"
+	// Importamos el repositorio (capa de datos sobre *sql.DB).
+	"multicatalogo-backend/repository"
 	// Importamos nuestro propio paquete de rutas para delegarle la configuración de los endpoints.
 	"multicatalogo-backend/routes"
 )
 
 // func main es el punto de entrada de la aplicación en Go. Todo comienza a ejecutarse aquí.
 func main() {
+	// Cargamos la configuración desde .env / variables de entorno.
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("FATAL: no se pudo cargar la configuración: %v", err)
+	}
+
+	// Abrimos el pool de conexiones y hacemos ping con timeout.
+	// Si PostgreSQL no está alcanzable, la aplicación NO arranca (fail fast).
+	db, err := config.NewDB(cfg)
+	if err != nil {
+		log.Fatalf("FATAL: PostgreSQL no alcanzable en %s:%s — %v", cfg.Host, cfg.Port, err)
+	}
+	// Cerramos el pool al finalizar el proceso.
+	defer func() {
+		if err := config.Close(db); err != nil {
+			log.Printf("error al cerrar la base de datos: %v", err)
+		}
+	}()
+
+	log.Printf("Conectado a PostgreSQL en %s:%s/%s", cfg.Host, cfg.Port, cfg.DBName)
+
+	// Cargamos la configuración de Redis e inicializamos la conexión con fail-fast (Fase 3).
+	redisCfg, err := config.LoadRedis()
+	if err != nil {
+		log.Fatalf("FATAL: no se pudo cargar la configuración de Redis: %v", err)
+	}
+
+	rdb, err := config.NewRedisClient(redisCfg)
+	if err != nil {
+		log.Fatalf("FATAL: Redis no alcanzable en %s:%s — %v", redisCfg.Host, redisCfg.Port, err)
+	}
+	defer func() {
+		if err := config.CloseRedis(rdb); err != nil {
+			log.Printf("error al cerrar Redis: %v", err)
+		}
+	}()
+
+	log.Printf("Conectado a Redis en %s:%s (DB %d)", redisCfg.Host, redisCfg.Port, redisCfg.DB)
+
 	// Instanciamos una nueva aplicación de Fiber y la guardamos en la variable 'app'.
 	app := fiber.New()
 
@@ -23,16 +72,35 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	// Llamamos a la función SetupRoutes de nuestro paquete 'routes', enviándole la instancia de nuestra 'app'.
-	routes.SetupRoutes(app)
+	// Llamamos a la función SetupRoutes de nuestro paquete 'routes',
+	// inyectando el repositorio conectado a PostgreSQL y el cliente Redis.
+	routes.SetupRoutes(app, repository.New(db), rdb)
 
-	// Ponemos a la aplicación a escuchar peticiones en el puerto 3000 de la máquina local. (Bloquea el hilo de ejecución).
-	app.Listen(":3000")
+	// Escuchamos en un goroutine para poder apagar el servidor con señales (SIGINT/SIGTERM).
+	listenErr := make(chan error, 1)
+	go func() {
+		log.Println("Servidor escuchando en http://localhost:3000")
+		listenErr <- app.Listen(":3000")
+	}()
+
+	// Canal de señales del sistema operativo (Ctrl+C / SIGTERM).
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case err := <-listenErr:
+		// Si el servidor no pudo escuchar (ej. puerto ocupado), terminamos con error.
+		if err != nil {
+			log.Fatalf("FATAL: el servidor dejó de escuchar: %v", err)
+		}
+	case s := <-sig:
+		// Señal de apagado: cerramos Fiber y luego el pool (defer).
+		log.Printf("Señal %v recibida: apagando el servidor…", s)
+		if err := app.Shutdown(); err != nil {
+			log.Printf("error al apagar Fiber: %v", err)
+		}
+	}
 }
-
-
-
-
 
 // // main.go
 // package main
