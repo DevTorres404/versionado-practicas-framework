@@ -6,6 +6,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { procesarCheckout } from '../services/checkoutService';
 
 interface DatosEnvio {
   nombre: string;
@@ -31,6 +32,7 @@ const Checkout = () => {
     metodoPago: METODOS_PAGO[0],
   });
   const [procesando, setProcesando] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Si el carrito está vacío, mostramos un aviso en lugar del formulario
   if (cart.length === 0) {
@@ -48,33 +50,70 @@ const Checkout = () => {
     setDatos((prev) => ({ ...prev, [campo]: valor }));
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setProcesando(true);
+    setError(null);
 
-    // Simulamos el procesamiento del pago con un pequeño retraso
-    setTimeout(() => {
-      const pedido = {
-        numero: `MC-${Date.now().toString().slice(-6)}`,
+    try {
+      const payload = {
+        cliente: {
+          nombre: datos.nombre,
+          email: datos.email,
+          direccion: datos.direccion,
+          ciudad: datos.ciudad,
+          telefono: datos.telefono,
+        },
+        metodoPago: datos.metodoPago,
         items: cart.map((item) => ({
+          id: item.id,
           nombre: item.nombre,
-          cantidad: item.cantidad,
           precio: item.precio,
+          cantidad: item.cantidad,
         })),
         total: totalPrice,
-        cliente: { nombre: datos.nombre, email: datos.email, ciudad: datos.ciudad },
-        fecha: new Date().toLocaleString("es-EC"),
+      };
+
+      // Invocamos el endpoint POST /api/checkout con transacción ACID en Go/PostgreSQL
+      const res = await procesarCheckout(payload);
+
+      const pedido = {
+        numero: res.numero,
+        items: res.items.map((it) => ({
+          nombre: it.nombre,
+          cantidad: it.cantidad,
+          precio: it.precio,
+        })),
+        total: res.total,
+        cliente: { nombre: res.cliente.nombre, email: res.cliente.email, ciudad: res.cliente.ciudad },
+        fecha: res.fecha,
       };
 
       // Vaciamos el carrito y pasamos los datos del pedido a la confirmación
       clearCart();
       navigate("/confirmacion", { state: { pedido } });
-    }, 1200);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error en la transacción de compra. Se ejecutó Rollback.');
+    } finally {
+      setProcesando(false);
+    }
   };
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-slate-800 mb-6">Finalizar Compra</h1>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
+          <div className="flex items-center">
+            <span className="text-xl mr-3">⚠️</span>
+            <div>
+              <h3 className="text-sm font-bold text-red-800">Transacción Fallida (ACID Rollback)</h3>
+              <p className="text-sm text-red-700 mt-0.5">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* ===== FORMULARIO DE ENVÍO ===== */}

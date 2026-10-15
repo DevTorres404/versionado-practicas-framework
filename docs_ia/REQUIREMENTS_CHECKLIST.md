@@ -1,9 +1,9 @@
 # Requirements Checklist
 
 ## Estado General
-- **Hito actual:** Fase 3 — Optimización y Caché con Redis (Cache-Aside)
-- **Última tarea completada:** Fase 3 (P1–P4): Redis en Docker Compose + config/redis.go + Cache-Aside en catálogo y red.
-- **Siguiente tarea pendiente:** Validación visual de latencias en DevTools Network / Postman.
+- **Hito actual:** Fase 4 — Motor Transaccional ACID, Inyección de Dependencias y Concurrencia
+- **Última tarea completada:** Fase 4 (P1–P5): Inyección de dependencias + Transacciones ACID (pedidos/pedido_items) + Goroutines para comisiones + Invalidación de caché Redis + Checkout.tsx conectado.
+- **Siguiente tarea pendiente:** Validación visual del flujo de compra y simulación de fallas ACID.
 
 ## Backend (Go/Fiber)
 - [x] La API devuelve el rol del usuario (admin/cliente) en login.
@@ -21,6 +21,11 @@
 - [x] F3-P2: Cliente oficial `go-redis/v9` en `config/redis.go` (`LoadRedis`, `NewRedisClient`, fail-fast y `CloseRedis`).
 - [x] F3-P3: Caché Cache-Aside en `GetProductos` (clave `productos:all`, TTL 5m, cabecera `X-Cache: HIT/MISS`).
 - [x] F3-P4: Caché Cache-Aside en `GetRed` (clave `red:tree:{email_usuario}`, TTL 10m, cabecera `X-Cache: HIT/MISS`).
+- [x] F4-P1: Inyección de Dependencias en repositorios y controladores (`DBRepository`, `CacheRepository`, `RedisCache`, constructores `New*Controller`).
+- [x] F4-P2: Microservicio `POST /api/checkout` en `checkoutController.go` recibiendo payload de compra.
+- [x] F4-P3: Transacciones ACID en `repository.CrearPedido` (`BEGIN`, `pedidos`, `pedido_items` con FK, decremento de stock, `ROLLBACK`/`COMMIT`).
+- [x] F4-P4: Concurrencia asíncrona mediante Goroutine (`go procesarComisionesAsincrono`) para actualizar ventas de la red en segundo plano.
+- [x] F4-P5: Invalidación de caché en Redis (`Del`) para actualizar los KPIs de la red automáticamente.
 
 ## Frontend (React/Vite)
 - [x] Datos de ejemplo (mock) del catálogo y de la red multinivel (`productos.ts`, `red.ts`).

@@ -12,29 +12,30 @@ import (
 	"strconv"
 	// Importamos Fiber para manejar la respuesta HTTP.
 	"github.com/gofiber/fiber/v2"
-	// Importamos el cliente oficial de Redis para Cache-Aside.
-	"github.com/redis/go-redis/v9"
 	// Importamos nuestro paquete de modelos para usar la estructura Producto.
 	"multicatalogo-backend/models"
+	"multicatalogo-backend/repository"
 )
 
-// GetProductos es la función controladora encargada de devolver el catálogo de artículos
-// implementando el patrón Cache-Aside con Redis (Fase 3).
-func GetProductos(c *fiber.Ctx) error {
-	// Obtenemos el repositorio inyectado por routes.SetupRoutes.
-	repo, err := obtenerRepositorio(c)
-	if err != nil {
-		return err
-	}
+// ProdController agrupa las operaciones del catálogo con dependencias inyectadas (Fase 4).
+type ProdController struct {
+	repo  repository.DBRepository
+	cache repository.CacheRepository
+}
 
-	rdb, _ := c.Locals("redis").(*redis.Client)
+// NewProdController crea un ProdController con su repositorio y caché inyectados.
+func NewProdController(repo repository.DBRepository, cache repository.CacheRepository) *ProdController {
+	return &ProdController{repo: repo, cache: cache}
+}
+
+// GetProductos devuelve el catálogo aplicando Cache-Aside sobre las dependencias inyectadas.
+func (pc *ProdController) GetProductos(c *fiber.Ctx) error {
 	ctx := c.Context()
 
-	// 1. Intenta leer la clave `productos:all` desde Redis.
-	if rdb != nil {
-		cachedJSON, err := rdb.Get(ctx, "productos:all").Result()
+	// 1. Intenta leer la clave `productos:all` desde la caché inyectada
+	if pc.cache != nil {
+		cachedJSON, err := pc.cache.Get(ctx, "productos:all")
 		if err == nil && cachedJSON != "" {
-			// 2. Si existe (Cache Hit), deserializa el JSON y retorna la respuesta inmediatamente (sin tocar PostgreSQL).
 			var productos []models.Producto
 			if err := json.Unmarshal([]byte(cachedJSON), &productos); err == nil {
 				c.Set("X-Cache", "HIT")
@@ -43,8 +44,8 @@ func GetProductos(c *fiber.Ctx) error {
 		}
 	}
 
-	// 3. Si no existe (Cache Miss), consulta PostgreSQL.
-	productos, err := repo.ObtenerProductos()
+	// 2. Si no existe (Cache Miss), consulta PostgreSQL mediante el repositorio inyectado
+	productos, err := pc.repo.ObtenerProductos()
 	if err != nil {
 		return c.Status(500).JSON(models.APIError{
 			Status:  500,
@@ -53,20 +54,19 @@ func GetProductos(c *fiber.Ctx) error {
 		})
 	}
 
-	// Serializa el resultado a JSON y guárdalo en Redis con un tiempo de expiración (TTL) de 5 minutos.
-	if rdb != nil {
+	// 3. Serializa y guarda en caché con TTL de 5 minutos
+	if pc.cache != nil {
 		if data, err := json.Marshal(productos); err == nil {
-			_ = rdb.Set(ctx, "productos:all", data, 5*time.Minute).Err()
+			_ = pc.cache.Set(ctx, "productos:all", string(data), 5*time.Minute)
 		}
 	}
 
-	// Retorna la respuesta con cabecera informativa de Cache Miss.
 	c.Set("X-Cache", "MISS")
 	return c.JSON(productos)
 }
 
 // GetProductoPorID devuelve un producto específico basado en su ID.
-func GetProductoPorID(c *fiber.Ctx) error {
+func (pc *ProdController) GetProductoPorID(c *fiber.Ctx) error {
 	idParam := c.Params("id")
 
 	id, err := strconv.Atoi(idParam)
@@ -78,15 +78,7 @@ func GetProductoPorID(c *fiber.Ctx) error {
 		})
 	}
 
-	// Obtenemos el repositorio inyectado por routes.SetupRoutes.
-	repo, err := obtenerRepositorio(c)
-	if err != nil {
-		return err
-	}
-
-	// Consultamos el producto real en PostgreSQL; si la fila no existe
-	// (sql.ErrNoRows) respondemos con un 404 en lugar de datos inventados.
-	producto, err := repo.ObtenerProductoPorID(id)
+	producto, err := pc.repo.ObtenerProductoPorID(id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.Status(404).JSON(models.APIError{
 			Status:  404,

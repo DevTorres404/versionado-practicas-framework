@@ -3,6 +3,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -92,4 +93,38 @@ func CloseRedis(client *redis.Client) error {
 		return nil
 	}
 	return client.Close()
+}
+
+// RedisCache implementa la interfaz CacheRepository desacoplada (Inyección de Dependencias, Fase 4).
+type RedisCache struct {
+	client *redis.Client
+}
+
+// NewRedisCache envuelve el cliente oficial de Redis en la abstracción de caché.
+func NewRedisCache(client *redis.Client) *RedisCache {
+	return &RedisCache{client: client}
+}
+
+// Get obtiene el valor asociado a la clave desde Redis.
+func (r *RedisCache) Get(ctx context.Context, key string) (string, error) {
+	if r == nil || r.client == nil {
+		return "", errors.New("cliente de redis no inicializado")
+	}
+	return r.client.Get(ctx, key).Result()
+}
+
+// Set guarda una clave con valor y tiempo de expiración (TTL).
+func (r *RedisCache) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	if r == nil || r.client == nil {
+		return nil
+	}
+	return r.client.Set(ctx, key, value, ttl).Err()
+}
+
+// Del elimina una o más claves de la caché (invalidación de caché).
+func (r *RedisCache) Del(ctx context.Context, keys ...string) error {
+	if r == nil || r.client == nil || len(keys) == 0 {
+		return nil
+	}
+	return r.client.Del(ctx, keys...).Err()
 }

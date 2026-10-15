@@ -5,9 +5,11 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"multicatalogo-backend/models"
 )
@@ -181,4 +183,99 @@ func materializarNodo(id int, nodos map[int]*models.Referido, hijosPorPadre map[
 	}
 
 	return copia
+}
+
+// CrearPedido ejecuta una transacción SQL ACID en PostgreSQL para registrar
+// la orden principal y su detalle en pedido_items, restando el stock simulado.
+// Si cualquier paso falla, se ejecuta ROLLBACK garantizando consistencia (Fase 4, Paso 3).
+func (r *Repository) CrearPedido(ctx context.Context, req *models.CheckoutRequest, numeroPedido string) (*models.Pedido, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("iniciar transacción: %w", err)
+	}
+	defer tx.Rollback()
+
+	// 1. Insertar el registro principal del pedido en la tabla `pedidos`
+	var pedidoID int
+	var fechaStr string
+	err = tx.QueryRowContext(ctx, `
+		INSERT INTO pedidos (numero, cliente_nombre, cliente_email, direccion, ciudad, telefono, metodo_pago, total, fecha)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+		RETURNING id, TO_CHAR(fecha, 'YYYY-MM-DD HH24:MI:SS')
+	`, numeroPedido, req.Cliente.Nombre, req.Cliente.Email, req.Cliente.Direccion, req.Cliente.Ciudad, req.Cliente.Telefono, req.MetodoPago, req.Total).Scan(&pedidoID, &fechaStr)
+	if err != nil {
+		return nil, fmt.Errorf("insertar pedido: %w", err)
+	}
+
+	pedido := &models.Pedido{
+		ID:            pedidoID,
+		Numero:        numeroPedido,
+		ClienteNombre: req.Cliente.Nombre,
+		ClienteEmail:  req.Cliente.Email,
+		Direccion:     req.Cliente.Direccion,
+		Ciudad:        req.Cliente.Ciudad,
+		Telefono:      req.Cliente.Telefono,
+		MetodoPago:    req.MetodoPago,
+		Total:         req.Total,
+		Fecha:         fechaStr,
+		Items:         make([]models.PedidoItem, 0, len(req.Items)),
+	}
+
+	// 2. Insertar cada detalle en `pedido_items` y restar el stock simulado
+	for _, item := range req.Items {
+		subtotal := item.Precio * float64(item.Cantidad)
+		var itemID int
+
+		err = tx.QueryRowContext(ctx, `
+			INSERT INTO pedido_items (pedido_id, producto_id, nombre, cantidad, precio, subtotal)
+			VALUES ($1, $2, $3, $4, $5, $6)
+			RETURNING id
+		`, pedidoID, item.ID, item.Nombre, item.Cantidad, item.Precio, subtotal).Scan(&itemID)
+		if err != nil {
+			return nil, fmt.Errorf("insertar item %d: %w", item.ID, err)
+		}
+
+		// Restar stock simulado en productos
+		_, err = tx.ExecContext(ctx, `
+			UPDATE productos
+			   SET stock = stock - $1
+			 WHERE id = $2
+		`, item.Cantidad, item.ID)
+		if err != nil {
+			return nil, fmt.Errorf("actualizar stock para producto %d: %w", item.ID, err)
+		}
+
+		pedido.Items = append(pedido.Items, models.PedidoItem{
+			ID:         itemID,
+			PedidoID:   pedidoID,
+			ProductoID: item.ID,
+			Nombre:     item.Nombre,
+			Cantidad:   item.Cantidad,
+			Precio:     item.Precio,
+			Subtotal:   subtotal,
+		})
+	}
+
+	// 3. Si todo es exitoso, COMMIT de la transacción ACID
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit transacción: %w", err)
+	}
+
+	return pedido, nil
+}
+
+// ActualizarComisionesReferidos actualiza las ventas de la red multinivel en PostgreSQL
+// de forma asíncrona dentro de una Goroutine (Fase 4, Paso 4).
+func (r *Repository) ActualizarComisionesReferidos(ctx context.Context, total float64) error {
+	// Incrementamos las ventas del nodo líder de la red (id: 0, "Tú")
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE referidos
+		   SET ventas = ventas + $1
+		 WHERE id = 0
+	`, total)
+	if err != nil {
+		return fmt.Errorf("actualizar ventas de referidos: %w", err)
+	}
+
+	return nil
 }

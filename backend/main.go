@@ -14,6 +14,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	// Importamos la configuración y el pool de conexiones a PostgreSQL.
 	"multicatalogo-backend/config"
+	// Importamos los controladores para instanciarlos con Inyección de Dependencias.
+	"multicatalogo-backend/controllers"
 	// Importamos el repositorio (capa de datos sobre *sql.DB).
 	"multicatalogo-backend/repository"
 	// Importamos nuestro propio paquete de rutas para delegarle la configuración de los endpoints.
@@ -72,9 +74,19 @@ func main() {
 		AllowHeaders: "Origin, Content-Type, Accept",
 	}))
 
-	// Llamamos a la función SetupRoutes de nuestro paquete 'routes',
-	// inyectando el repositorio conectado a PostgreSQL y el cliente Redis.
-	routes.SetupRoutes(app, repository.New(db), rdb)
+	// Instanciamos el repositorio y el adaptador de caché (Inyección de Dependencias, Fase 4)
+	repo := repository.New(db)
+	cache := config.NewRedisCache(rdb)
+
+	// Instanciamos los controladores inyectándoles sus dependencias
+	authCtrl := controllers.NewAuthController(repo)
+	prodCtrl := controllers.NewProdController(repo, cache)
+	redCtrl := controllers.NewRedController(repo, cache)
+	checkoutCtrl := controllers.NewCheckoutController(repo, cache)
+	healthCtrl := controllers.NewHealthController()
+
+	// Inyectamos los controladores en el router
+	routes.SetupRoutes(app, authCtrl, prodCtrl, redCtrl, checkoutCtrl, healthCtrl)
 
 	// Escuchamos en un goroutine para poder apagar el servidor con señales (SIGINT/SIGTERM).
 	listenErr := make(chan error, 1)

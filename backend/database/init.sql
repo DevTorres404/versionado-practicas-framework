@@ -4,6 +4,8 @@
 -- Re-running it manually is safe: it drops and recreates everything in the
 -- correct FK order (referidos has a self-reference).
 
+DROP TABLE IF EXISTS pedido_items CASCADE;
+DROP TABLE IF EXISTS pedidos CASCADE;
 DROP TABLE IF EXISTS referidos CASCADE;
 DROP TABLE IF EXISTS productos CASCADE;
 DROP TABLE IF EXISTS usuarios CASCADE;
@@ -32,7 +34,8 @@ CREATE TABLE productos (
     precio      NUMERIC(10, 2) NOT NULL,
     categoria   TEXT        NOT NULL,
     img         TEXT        NOT NULL,
-    galeria     JSONB       NOT NULL DEFAULT '[]'
+    galeria     JSONB       NOT NULL DEFAULT '[]',
+    stock       INTEGER     NOT NULL DEFAULT 50
 );
 
 -- ---------------------------------------------------------------------------
@@ -104,3 +107,33 @@ INSERT INTO referidos (id, nombre, nivel, ventas, parent_id) VALUES
     (5, 'Sofía León', 2, 430.00, 1),
     (6, 'Marco Díaz', 2, 380.00, 2),
     (7, 'Diana Paz', 3, 300.00, 4);
+
+-- ---------------------------------------------------------------------------
+-- pedidos: almacena las transacciones principales de checkout (Fase 4).
+-- ---------------------------------------------------------------------------
+CREATE TABLE pedidos (
+    id             SERIAL PRIMARY KEY,
+    numero         VARCHAR(50) NOT NULL UNIQUE,
+    cliente_nombre TEXT NOT NULL,
+    cliente_email  TEXT NOT NULL,
+    direccion      TEXT NOT NULL,
+    ciudad         TEXT NOT NULL,
+    telefono       TEXT NOT NULL,
+    metodo_pago    TEXT NOT NULL,
+    total          NUMERIC(10, 2) NOT NULL,
+    fecha          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ---------------------------------------------------------------------------
+-- pedido_items: detalle de productos comprados con integridad referencial.
+-- producto_id hace referencia obligatoria a productos(id) para verificar ACID.
+-- ---------------------------------------------------------------------------
+CREATE TABLE pedido_items (
+    id          SERIAL PRIMARY KEY,
+    pedido_id   INTEGER NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+    producto_id INTEGER NOT NULL REFERENCES productos(id),
+    nombre      TEXT NOT NULL,
+    cantidad    INTEGER NOT NULL,
+    precio      NUMERIC(10, 2) NOT NULL,
+    subtotal    NUMERIC(10, 2) NOT NULL
+);

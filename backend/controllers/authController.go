@@ -14,28 +14,23 @@ import (
 	"multicatalogo-backend/repository"
 )
 
-// obtenerRepositorio recupera el repositorio que routes.SetupRoutes inyecta
-// en los locals de la petición. Así las funciones conservan su firma original
-// (c *fiber.Ctx) error sin usar variables de paquete.
-func obtenerRepositorio(c *fiber.Ctx) (*repository.Repository, error) {
-	repo, ok := c.Locals("repository").(*repository.Repository)
-	if !ok || repo == nil {
-		return nil, c.Status(500).JSON(models.APIError{
-			Status:  500,
-			Message: "Repositorio de datos no configurado",
-		})
-	}
-	return repo, nil
+// AuthController maneja la autenticación mediante Inyección de Dependencias (Fase 4).
+type AuthController struct {
+	repo repository.DBRepository
+}
+
+// NewAuthController crea un AuthController con su repositorio PostgreSQL inyectado.
+func NewAuthController(repo repository.DBRepository) *AuthController {
+	return &AuthController{repo: repo}
 }
 
 // Login es la función controladora que se ejecutará cuando el cliente envíe sus credenciales.
-func Login(c *fiber.Ctx) error {
-	// Creamos una variable 'req' del tipo LoginRequest (ubicada en nuestro paquete models) para almacenar los datos.
+func (ac *AuthController) Login(c *fiber.Ctx) error {
+	// Creamos una variable 'req' del tipo LoginRequest para almacenar los datos.
 	var req models.LoginRequest
 
-	// Intentamos parsear (transformar) el cuerpo JSON entrante y guardarlo en la variable 'req'.
+	// Intentamos parsear el cuerpo JSON entrante
 	if err := c.BodyParser(&req); err != nil {
-		// Si ocurre un error al parsear (ej. JSON mal formado), retornamos un estado HTTP 400 (Bad Request).
 		return c.Status(400).JSON(models.APIError{
 			Status:  400,
 			Message: "Cuerpo de petición inválido",
@@ -51,15 +46,8 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// Obtenemos el repositorio inyectado (capa de acceso a datos sobre PostgreSQL).
-	repo, err := obtenerRepositorio(c)
-	if err != nil {
-		return err
-	}
-
-	// Buscamos el usuario en la tabla `usuarios`; si no coincide ninguna fila
-	// (sql.ErrNoRows) devolvemos exactamente el mismo 401 de siempre.
-	usuario, err := repo.BuscarUsuarioPorCredenciales(req.Email, req.Password)
+	// Buscamos el usuario en la tabla `usuarios` usando la dependencia inyectada
+	usuario, err := ac.repo.BuscarUsuarioPorCredenciales(req.Email, req.Password)
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.Status(401).JSON(models.APIError{
 			Status:  401,
