@@ -7,12 +7,18 @@ import Catalogo from './components/Catalogo';
 import Storefront from './components/Storefront';
 import DetalleProducto from './components/DetalleProducto';
 import MiRed from './components/MiRed';
+import MisPedidos from './components/MisPedidos';
+import AdminProductos from './components/AdminProductos';
+import AdminPedidos from './components/AdminPedidos';
+import AdminLiquidaciones from './components/AdminLiquidaciones';
 import Carrito from './components/Carrito';
 import Checkout from './components/Checkout';
 import Confirmacion from './components/Confirmacion';
 import Login from './components/Login';
+import Registro from './components/Registro';
 import { CartProvider } from './context/CartContext';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/auth';
 
 // Componente para proteger las rutas privadas: exige estar autenticado
 const ProtectedRoute = () => {
@@ -60,19 +66,24 @@ function App() {
       <CartBoundary> {/* Proveedor del Carrito (uno por usuario) */}
         <BrowserRouter>
           <Routes>
-            {/* Ruta pública */}
+            {/* Rutas públicas */}
             <Route path="/login" element={<Login />} />
+            <Route path="/registro" element={<Registro />} />
 
             {/* Rutas protegidas (requieren login) */}
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<Layout />}>
-                {/* Solo administrador: Dashboard y Red multinivel */}
+                {/* Solo administrador: Dashboard, gestión de productos, pedidos y liquidaciones */}
                 <Route element={<AdminRoute />}>
                   <Route index element={<Dashboard />} />
-                  <Route path="mi-red" element={<MiRed />} />
+                  <Route path="admin/productos" element={<AdminProductos />} />
+                  <Route path="admin/pedidos" element={<AdminPedidos />} />
+                  <Route path="admin/liquidaciones" element={<AdminLiquidaciones />} />
                 </Route>
 
-                {/* Ambos roles: flujo de compra en línea */}
+                {/* Ambos roles: red propia, historial de compras y flujo de tienda */}
+                <Route path="mi-red" element={<MiRed />} />
+                <Route path="mis-pedidos" element={<MisPedidos />} />
                 <Route path="tienda" element={<Storefront />} />
                 <Route path="catalogo" element={<Catalogo />} />
                 <Route path="producto/:id" element={<DetalleProducto />} />

@@ -1,12 +1,9 @@
-// src/components/Checkout.tsx
-// Flujo de checkout simulado (Tema 5):
-// - Formulario de envío con validación básica
-// - Resumen del pedido en tiempo real
-// - Simula el procesamiento del pago y redirige a /confirmacion
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/auth';
+import { useCart } from '../context/cart';
 import { procesarCheckout } from '../services/checkoutService';
+import { ApiError } from '../services/http';
 
 interface DatosEnvio {
   nombre: string;
@@ -20,12 +17,13 @@ interface DatosEnvio {
 const METODOS_PAGO = ["Tarjeta de crédito", "Transferencia bancaria", "Efectivo contra entrega"];
 
 const Checkout = () => {
+  const { user } = useAuth();
   const { cart, totalPrice, clearCart } = useCart();
   const navigate = useNavigate();
 
   const [datos, setDatos] = useState<DatosEnvio>({
     nombre: "",
-    email: "",
+    email: user?.email ?? "",
     direccion: "",
     ciudad: "",
     telefono: "",
@@ -93,7 +91,13 @@ const Checkout = () => {
       clearCart();
       navigate("/confirmacion", { state: { pedido } });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error en la transacción de compra. Se ejecutó Rollback.');
+      if (err instanceof ApiError) {
+        setError(err.message + (err.details ? `: ${err.details}` : ''));
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Error en la transacción de compra. Se ejecutó Rollback.');
+      }
     } finally {
       setProcesando(false);
     }

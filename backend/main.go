@@ -66,33 +66,44 @@ func main() {
 	// Instanciamos una nueva aplicación de Fiber y la guardamos en la variable 'app'.
 	app := fiber.New()
 
-	// Implementamos el middleware CORS a nivel global usando app.Use() para interceptar todas las peticiones entrantes.
+	// Implementamos el middleware CORS a nivel global permitiendo Authorization para tokens JWT
 	app.Use(cors.New(cors.Config{
-		// Configuramos el CORS para permitir únicamente peticiones provenientes del frontend local en el puerto 5173.
 		AllowOrigins: "http://172.17.82.108:5173, http://localhost:5173",
-		// Declaramos de forma explícita qué cabeceras (Headers) se permitirán en la comunicación.
-		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 	}))
+
+	// Variables de configuración de servidor y seguridad
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "multicatalogo-super-secret-jwt-key-2026"
+	}
 
 	// Instanciamos el repositorio y el adaptador de caché (Inyección de Dependencias, Fase 4)
 	repo := repository.New(db)
 	cache := config.NewRedisCache(rdb)
 
 	// Instanciamos los controladores inyectándoles sus dependencias
-	authCtrl := controllers.NewAuthController(repo)
+	authCtrl := controllers.NewAuthController(repo, jwtSecret)
 	prodCtrl := controllers.NewProdController(repo, cache)
 	redCtrl := controllers.NewRedController(repo, cache)
+	pedidoCtrl := controllers.NewPedidoController(repo, cache)
 	checkoutCtrl := controllers.NewCheckoutController(repo, cache)
-	healthCtrl := controllers.NewHealthController()
+	liqCtrl := controllers.NewLiquidacionController(repo)
+	repCtrl := controllers.NewReporteController(repo)
+	healthCtrl := controllers.NewHealthController(repo, cache)
 
-	// Inyectamos los controladores en el router
-	routes.SetupRoutes(app, authCtrl, prodCtrl, redCtrl, checkoutCtrl, healthCtrl)
+	// Inyectamos los controladores y la clave JWT en el router
+	routes.SetupRoutes(app, authCtrl, prodCtrl, redCtrl, pedidoCtrl, checkoutCtrl, liqCtrl, repCtrl, healthCtrl, jwtSecret)
 
 	// Escuchamos en un goroutine para poder apagar el servidor con señales (SIGINT/SIGTERM).
 	listenErr := make(chan error, 1)
 	go func() {
-		log.Println("Servidor escuchando en http://localhost:3000")
-		listenErr <- app.Listen(":3000")
+		log.Printf("Servidor escuchando en http://localhost:%s", port)
+		listenErr <- app.Listen(":" + port)
 	}()
 
 	// Canal de señales del sistema operativo (Ctrl+C / SIGTERM).
@@ -113,60 +124,3 @@ func main() {
 		}
 	}
 }
-
-// // main.go
-// package main
-
-// import (
-// 	"github.com/gofiber/fiber/v2"
-// 	"github.com/gofiber/fiber/v2/middleware/cors"
-// )
-
-// // Estructuras de datos
-// type LoginRequest struct {
-// 	Email    string `json:"email"`
-// 	Password string `json:"password"`
-// }
-
-// type Producto struct {
-// 	ID     int     `json:"id"`
-// 	Nombre string  `json:"nombre"`
-// 	Precio float64 `json:"precio"`
-// 	Img    string  `json:"img"`
-// }
-
-// func main() {
-// 	app := fiber.New()
-
-// 	// Middleware CORS para permitir peticiones desde React (Vite corre en el puerto 5173)
-// 	app.Use(cors.New(cors.Config{
-// 		AllowOrigins: "http://localhost:5173",
-// 		AllowHeaders: "Origin, Content-Type, Accept",
-// 	}))
-
-// 	// Endpoint para Login
-// 	app.Post("/api/login", func(c *fiber.Ctx) error {
-// 		var req LoginRequest
-// 		if err := c.BodyParser(&req); err != nil {
-// 			return c.Status(400).JSON(fiber.Map{"error": "Cuerpo de petición inválido"})
-// 		}
-
-// 		if req.Email == "admin@upse.edu.ec" && req.Password == "123456" {
-// 			return c.JSON(fiber.Map{"token": "fake-jwt-token-123", "email": req.Email})
-// 		}
-// 		return c.Status(401).JSON(fiber.Map{"error": "Credenciales incorrectas"})
-// 	})
-
-// 	// Endpoint para obtener Productos
-// 	app.Get("/api/productos", func(c *fiber.Ctx) error {
-// 		productos := []Producto{
-// 			{ID: 1, Nombre: "Serum Revitalizante", Precio: 45.00, Img: "https://picsum.photos/seed/serum/150"},
-// 			{ID: 2, Nombre: "Crema Hidratante Pro", Precio: 32.50, Img: "https://picsum.photos/seed/crema/150"},
-// 			{ID: 3, Nombre: "Tónico Purificante", Precio: 28.00, Img: "https://picsum.photos/seed/tonico/150"},
-// 			{ID: 4, Nombre: "Mascarilla Nocturna", Precio: 50.00, Img: "https://picsum.photos/seed/mascarilla/150"},
-// 		}
-// 		return c.JSON(productos)
-// 	})
-
-// 	app.Listen(":3000")
-// }

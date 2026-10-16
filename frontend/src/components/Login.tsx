@@ -1,7 +1,13 @@
-// src/components/Login.tsx
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth, type Rol } from "../context/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth, type Rol } from "../context/auth";
+import { apiFetch, ApiError } from "../services/http";
+
+interface LoginResponse {
+  token: string;
+  email: string;
+  rol: string;
+}
 
 const Login = () => {
   const [email, setEmail] = useState<string>("");
@@ -12,35 +18,35 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
-    // Consumo de API RESTful usando promesas (Tema 4)
-    fetch("http://localhost:3000/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-      .then((response) => {
-        if (!response.ok) throw new Error("Credenciales incorrectas");
-        return response.json();
-      })
-      .then((data) => {
-        setError("");
-        // La API devuelve el rol (admin | cliente) junto al correo (Tema 5)
-        const rol: Rol = data.rol === "admin" ? "admin" : "cliente";
-        login({ email: data.email, rol });
-
-        // Redirigimos según el rol: admin al Dashboard, cliente a la Tienda
-        navigate(rol === "admin" ? "/" : "/tienda");
-      })
-      .catch((err) => {
-        setError(err.message);
-      })
-      .finally(() => {
-        setLoading(false);
+    try {
+      // Consumo de API RESTful usando el cliente http centralizado
+      const data = await apiFetch<LoginResponse>("/api/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
       });
+
+      const rol: Rol = data.rol === "admin" ? "admin" : "cliente";
+      // Persistimos usuario y token JWT real en la sesión
+      login({ email: data.email, rol }, data.token);
+
+      // Redirigimos según el rol: admin al Dashboard, cliente a la Tienda
+      navigate(rol === "admin" ? "/" : "/tienda");
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Error al iniciar sesión");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,11 +97,18 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
           >
             {loading ? "Validando..." : "Iniciar Sesión"}
           </button>
         </form>
+
+        <div className="mt-6 text-center text-sm text-slate-600">
+          ¿No tienes una cuenta?{" "}
+          <Link to="/registro" className="text-indigo-600 hover:text-indigo-800 font-semibold underline">
+            Regístrate aquí
+          </Link>
+        </div>
 
         <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-1">
           <p className="font-semibold text-slate-700">Cuentas de prueba:</p>

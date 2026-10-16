@@ -1,5 +1,6 @@
 // src/services/checkoutService.ts
-// Capa de servicios para el microservicio transaccional de Checkout (Fase 4).
+// Capa de servicios para el microservicio transaccional de Checkout (Fase 4 & Hardening).
+import { apiFetch } from "./http";
 
 export interface ClienteCheckout {
   nombre: string;
@@ -32,33 +33,10 @@ export interface CheckoutResponse {
   mensaje?: string;
 }
 
-const API_BASE = "http://localhost:3000";
-
-// POST /api/checkout: invoca la transacción ACID en el backend de Go
+// POST /api/checkout: invoca la transacción ACID en el backend de Go con token JWT y recálculo en servidor
 export const procesarCheckout = async (payload: CheckoutPayload): Promise<CheckoutResponse> => {
-  const res = await fetch(`${API_BASE}/api/checkout`, {
+  return await apiFetch<CheckoutResponse>("/api/checkout", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(payload),
   });
-
-  if (!res.ok) {
-    let errorMsg = `Error ${res.status} al procesar el pedido`;
-    try {
-      const errData = await res.json();
-      if (errData && errData.message) {
-        errorMsg = errData.message;
-        if (errData.details) {
-          errorMsg += `: ${errData.details}`;
-        }
-      }
-    } catch {
-      // Fallback
-    }
-    throw new Error(errorMsg);
-  }
-
-  return (await res.json()) as CheckoutResponse;
 };

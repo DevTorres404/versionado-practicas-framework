@@ -58,7 +58,7 @@ func TestConstruirArbolReconstruyeElArbolOriginal(t *testing.T) {
 		},
 	}
 
-	obtenido := construirArbol(filaPlana)
+	obtenido := construirArbol(filaPlana, 0)
 
 	if !reflect.DeepEqual(obtenido, esperado) {
 		t.Errorf("construirArbol() = %+v, want %+v", obtenido, esperado)
@@ -68,7 +68,7 @@ func TestConstruirArbolReconstruyeElArbolOriginal(t *testing.T) {
 // TestConstruirArbolEntradaVacia verifies that an empty flat list yields
 // the zero-value root instead of panicking.
 func TestConstruirArbolEntradaVacia(t *testing.T) {
-	obtenido := construirArbol(nil)
+	obtenido := construirArbol(nil, 0)
 
 	if !reflect.DeepEqual(obtenido, models.Referido{}) {
 		t.Errorf("construirArbol(nil) = %+v, want zero value", obtenido)
@@ -85,7 +85,7 @@ func TestConstruirArbolIncluyeHijosDeLaRaiz(t *testing.T) {
 		{ID: 1, Nombre: "Uno", Nivel: 1, Ventas: 50, ParentID: ptrInt(0)},
 	}
 
-	obtenido := construirArbol(filaPlana)
+	obtenido := construirArbol(filaPlana, 0)
 
 	if len(obtenido.Hijos) != 1 {
 		t.Fatalf("raíz con %d hijos, want 1", len(obtenido.Hijos))

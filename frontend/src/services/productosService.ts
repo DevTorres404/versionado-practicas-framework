@@ -1,20 +1,11 @@
 // src/services/productosService.ts
-// Capa de servicios del catálogo: consume la API real de Go/PostgreSQL.
-// Se conservan los mismos nombres de función y las mismas formas de
-// resolución que el mock anterior, por lo que los componentes no cambian.
-
+// Capa de servicios del catálogo: consume la API real de Go/PostgreSQL mediante apiFetch.
 import { type Producto } from "../data/productos";
+import { apiFetch, ApiError } from "./http";
 
-// URL base del backend (Fiber escucha en :3000).
-const API_BASE = "http://localhost:3000";
-
-// GET /api/productos (lista completa desde PostgreSQL)
+// GET /api/productos (lista completa desde PostgreSQL con Cache-Aside)
 export const getProductos = async (): Promise<Producto[]> => {
-  const res = await fetch(`${API_BASE}/api/productos`);
-  if (!res.ok) {
-    throw new Error(`Error ${res.status} al cargar el catálogo`);
-  }
-  return (await res.json()) as Producto[];
+  return await apiFetch<Producto[]>("/api/productos");
 };
 
 // GET /api/productos/:id (detalle de un producto)
@@ -22,12 +13,12 @@ export const getProductos = async (): Promise<Producto[]> => {
 export const getProductoById = async (
   id: number
 ): Promise<Producto | undefined> => {
-  const res = await fetch(`${API_BASE}/api/productos/${id}`);
-  if (res.status === 404) {
-    return undefined;
+  try {
+    return await apiFetch<Producto>(`/api/productos/${id}`);
+  } catch (err: unknown) {
+    if (err instanceof ApiError && err.status === 404) {
+      return undefined;
+    }
+    throw err;
   }
-  if (!res.ok) {
-    throw new Error(`Error ${res.status} al cargar el producto`);
-  }
-  return (await res.json()) as Producto;
 };

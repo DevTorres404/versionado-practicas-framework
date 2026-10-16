@@ -128,3 +128,11 @@ func (r *RedisCache) Del(ctx context.Context, keys ...string) error {
 	}
 	return r.client.Del(ctx, keys...).Err()
 }
+
+// Ping verifica la conexión activa con Redis.
+func (r *RedisCache) Ping(ctx context.Context) error {
+	if r == nil || r.client == nil {
+		return errors.New("cliente de redis no inicializado")
+	}
+	return r.client.Ping(ctx).Err()
+}

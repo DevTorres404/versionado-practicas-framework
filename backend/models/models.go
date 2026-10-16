@@ -1,62 +1,54 @@
 // Declaramos el paquete models para agrupar las estructuras de datos de la aplicación.
 package models
 
-// LoginRequest define la estructura esperada para el cuerpo de la petición (JSON) al iniciar sesión.
+// LoginRequest define la estructura para inicio de sesión.
 type LoginRequest struct {
-	// Email representa el correo del usuario; la etiqueta `json:"email"` indica cómo se mapea el JSON a esta variable.
-	Email string `json:"email"`
-	// Password representa la contraseña del usuario; se extrae del campo "password" del JSON entrante.
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-// Producto define la estructura de los datos de un artículo en nuestro catálogo.
+// RegisterRequest define la estructura para registro de nuevos clientes en la red.
+type RegisterRequest struct {
+	Nombre   string `json:"nombre"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Ref      string `json:"ref,omitempty"` // Código de referido opcional
+}
+
+// Producto define un artículo del catálogo.
 type Producto struct {
-	// ID es el identificador único numérico del producto.
-	ID int `json:"id"`
-	// Nombre es la descripción en texto del producto.
-	Nombre string `json:"nombre"`
-	// Descripcion es el texto largo del producto usado en la ficha de detalle.
-	Descripcion string `json:"descripcion"`
-	// Precio es el costo del producto, almacenado como un número con decimales (float64).
-	Precio float64 `json:"precio"`
-	// Categoria agrupa el producto para los filtros del catálogo.
-	Categoria string `json:"categoria"`
-	// Img es la URL o ruta que apunta a la fotografía o imagen del producto.
-	Img string `json:"img"`
-	// Galeria es la lista de imágenes adicionales (columna JSONB en PostgreSQL).
-	Galeria []string `json:"galeria"`
-	// Stock disponible del producto (simulado para transacciones ACID en Fase 4).
-	Stock int `json:"stock,omitempty"`
+	ID          int      `json:"id"`
+	Nombre      string   `json:"nombre"`
+	Descripcion string   `json:"descripcion"`
+	Precio      float64  `json:"precio"`
+	Categoria   string   `json:"categoria"`
+	Img         string   `json:"img"`
+	Galeria     []string `json:"galeria"`
+	Stock       int      `json:"stock"`
+	Activo      bool     `json:"activo"`
 }
 
-// Usuario representa una fila de la tabla `usuarios` (inicio de sesión).
+// Usuario representa una cuenta en la tabla `usuarios`.
 type Usuario struct {
-	// ID es el identificador único del usuario.
-	ID int `json:"id"`
-	// Email es el correo con el que inicia sesión.
-	Email string `json:"email"`
-	// Password se mantiene en texto plano temporalmente (decisión del cuaderno de la tarea).
-	Password string `json:"-"`
-	// Rol determina los permisos del usuario (admin/cliente).
-	Rol string `json:"rol"`
+	ID         int    `json:"id"`
+	Nombre     string `json:"nombre"`
+	Email      string `json:"email"`
+	Password   string `json:"-"`
+	Rol        string `json:"rol"`
+	Activo     bool   `json:"activo"`
+	ReferidoID *int   `json:"referido_id,omitempty"`
+	CreadoEn   string `json:"creado_en,omitempty"`
 }
 
-// Referido representa un nodo de la red multinivel de referidos.
-// En la base de datos se guarda como una fila plana con `parent_id`;
-// el campo Hijos se reconstruye en memoria con construirArbol().
+// Referido representa un nodo de la red multinivel MLM.
 type Referido struct {
-	// ID es el identificador único del referido.
-	ID int `json:"id"`
-	// Nombre es el nombre visible del referido.
-	Nombre string `json:"nombre"`
-	// Nivel indica la profundidad en la red (0 = raíz, 1 = directo, ...).
-	Nivel int `json:"nivel"`
-	// Ventas son las ventas mensuales en dólares de ese referido.
-	Ventas float64 `json:"ventas"`
-	// ParentID es la fila padre en la tabla plana; no se expone en el JSON.
-	ParentID *int `json:"-"`
-	// Hijos son los referidos de un nivel más abajo (se reconstruye desde la BD).
-	Hijos []Referido `json:"hijos,omitempty"`
+	ID       int        `json:"id"`
+	Nombre   string     `json:"nombre"`
+	Nivel    int        `json:"nivel"`
+	Ventas   float64    `json:"ventas"`
+	Codigo   string     `json:"codigo,omitempty"`
+	ParentID *int       `json:"-"`
+	Hijos    []Referido `json:"hijos,omitempty"`
 }
 
 // APIError estandariza los mensajes de error HTTP.
@@ -66,7 +58,7 @@ type APIError struct {
 	Details interface{} `json:"details,omitempty"`
 }
 
-// ClienteCheckout contiene los datos del comprador enviados desde Checkout.tsx
+// ClienteCheckout contiene los datos del comprador.
 type ClienteCheckout struct {
 	Nombre    string `json:"nombre"`
 	Email     string `json:"email"`
@@ -75,7 +67,7 @@ type ClienteCheckout struct {
 	Telefono  string `json:"telefono"`
 }
 
-// ItemCheckout representa un producto dentro de la orden de compra
+// ItemCheckout representa un producto dentro del carrito/orden.
 type ItemCheckout struct {
 	ID       int     `json:"id"`
 	Nombre   string  `json:"nombre"`
@@ -83,7 +75,7 @@ type ItemCheckout struct {
 	Cantidad int     `json:"cantidad"`
 }
 
-// CheckoutRequest es el payload esperado en POST /api/checkout
+// CheckoutRequest es el payload esperado en POST /api/checkout.
 type CheckoutRequest struct {
 	Cliente    ClienteCheckout `json:"cliente"`
 	MetodoPago string          `json:"metodoPago"`
@@ -91,10 +83,11 @@ type CheckoutRequest struct {
 	Total      float64         `json:"total"`
 }
 
-// Pedido representa la orden persistida en la tabla `pedidos` (Fase 4)
+// Pedido representa la orden de compra en la tabla `pedidos`.
 type Pedido struct {
 	ID            int          `json:"id"`
 	Numero        string       `json:"numero"`
+	UsuarioID     *int         `json:"usuario_id,omitempty"`
 	ClienteNombre string       `json:"cliente_nombre"`
 	ClienteEmail  string       `json:"cliente_email"`
 	Direccion     string       `json:"direccion"`
@@ -102,11 +95,12 @@ type Pedido struct {
 	Telefono      string       `json:"telefono"`
 	MetodoPago    string       `json:"metodo_pago"`
 	Total         float64      `json:"total"`
+	Estado        string       `json:"estado"`
 	Fecha         string       `json:"fecha"`
 	Items         []PedidoItem `json:"items,omitempty"`
 }
 
-// PedidoItem representa un item persistido en la tabla `pedido_items`
+// PedidoItem representa un item persistido en la tabla `pedido_items`.
 type PedidoItem struct {
 	ID         int     `json:"id"`
 	PedidoID   int     `json:"pedido_id"`
@@ -117,7 +111,7 @@ type PedidoItem struct {
 	Subtotal   float64 `json:"subtotal"`
 }
 
-// CheckoutResponse es la respuesta enviada al frontend para mostrar en Confirmacion.tsx
+// CheckoutResponse es la respuesta tras finalizar la compra.
 type CheckoutResponse struct {
 	Numero  string          `json:"numero"`
 	Total   float64         `json:"total"`
@@ -125,4 +119,68 @@ type CheckoutResponse struct {
 	Cliente ClienteCheckout `json:"cliente"`
 	Items   []ItemCheckout  `json:"items"`
 	Mensaje string          `json:"mensaje,omitempty"`
+}
+
+// Comision representa una fila en el ledger de comisiones.
+type Comision struct {
+	ID            int     `json:"id"`
+	PedidoID      int     `json:"pedido_id"`
+	PedidoNumero  string  `json:"pedido_numero,omitempty"`
+	ReferidoID    int     `json:"referido_id"`
+	Nivel         int     `json:"nivel"`
+	Porcentaje    float64 `json:"porcentaje"`
+	Monto         float64 `json:"monto"`
+	Estado        string  `json:"estado"`
+	LiquidacionID *int    `json:"liquidacion_id,omitempty"`
+	CreadoEn      string  `json:"creado_en"`
+}
+
+// Liquidacion representa un desembolso agrupado a un distribuidor.
+type Liquidacion struct {
+	ID             int     `json:"id"`
+	ReferidoID     int     `json:"referido_id"`
+	ReferidoNombre string  `json:"referido_nombre,omitempty"`
+	Total          float64 `json:"total"`
+	Estado         string  `json:"estado"`
+	CreadoEn       string  `json:"creado_en"`
+	PagadaEn       string  `json:"pagada_en,omitempty"`
+}
+
+// LiquidacionRequest contiene el distribuidor a liquidar.
+type LiquidacionRequest struct {
+	ReferidoID int `json:"referido_id"`
+}
+
+// ReporteResumen consolida los indicadores ejecutivos de ventas y comisiones.
+type ReporteResumen struct {
+	TotalVentas          float64 `json:"total_ventas"`
+	NumeroPedidos        int     `json:"numero_pedidos"`
+	TicketPromedio       float64 `json:"ticket_promedio"`
+	ComisionesDevengadas float64 `json:"comisiones_devengadas"`
+	ComisionesPendientes float64 `json:"comisiones_pendientes"`
+}
+
+// TopProducto representa un producto en el ranking de ventas.
+type TopProducto struct {
+	ID               int     `json:"id"`
+	Nombre           string  `json:"nombre"`
+	UnidadesVendidas int     `json:"unidades_vendidas"`
+	TotalGenerado    float64 `json:"total_generado"`
+}
+
+// TopReferido representa un distribuidor en el ranking de ventas.
+type TopReferido struct {
+	ID       int     `json:"id"`
+	Nombre   string  `json:"nombre"`
+	Codigo   string  `json:"codigo"`
+	Ventas   float64 `json:"ventas"`
+	Directos int     `json:"directos"`
+}
+
+// Pagina envuelve cualquier listado con metadatos de paginación.
+type Pagina struct {
+	Data  interface{} `json:"data"`
+	Page  int         `json:"page"`
+	Limit int         `json:"limit"`
+	Total int         `json:"total"`
 }

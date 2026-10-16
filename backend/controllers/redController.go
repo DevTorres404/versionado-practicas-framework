@@ -3,6 +3,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -66,4 +67,119 @@ func (rc *RedController) GetRed(c *fiber.Ctx) error {
 
 	c.Set("X-Cache", "MISS")
 	return c.JSON(red)
+}
+
+// GetMiRed devuelve el subárbol multinivel anclado en el nodo de red del usuario autenticado.
+func (rc *RedController) GetMiRed(c *fiber.Ctx) error {
+	subStr, _ := c.Locals("sub").(string)
+	if subStr == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(models.APIError{
+			Status:  fiber.StatusUnauthorized,
+			Message: "Identidad de usuario no verificada",
+		})
+	}
+
+	var uid int
+	if _, err := fmt.Sscanf(subStr, "%d", &uid); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIError{
+			Status:  fiber.StatusBadRequest,
+			Message: "Identificador de usuario inválido",
+		})
+	}
+
+	usuario, err := rc.repo.BuscarUsuarioPorID(uid)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(models.APIError{
+			Status:  fiber.StatusNotFound,
+			Message: "Usuario no encontrado",
+		})
+	}
+
+	if usuario.ReferidoID == nil {
+		return c.JSON(models.Referido{
+			Nombre: usuario.Nombre,
+			Nivel:  0,
+		})
+	}
+
+	cacheKey := fmt.Sprintf("red:tree:%d", *usuario.ReferidoID)
+	ctx := c.Context()
+
+	if rc.cache != nil {
+		if cachedJSON, err := rc.cache.Get(ctx, cacheKey); err == nil && cachedJSON != "" {
+			var red models.Referido
+			if err := json.Unmarshal([]byte(cachedJSON), &red); err == nil {
+				c.Set("X-Cache", "HIT")
+				return c.JSON(red)
+			}
+		}
+	}
+
+	red, err := rc.repo.ObtenerRedDeUsuario(*usuario.ReferidoID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.APIError{
+			Status:  fiber.StatusInternalServerError,
+			Message: "Error al armar la red de referidos del usuario",
+			Details: err.Error(),
+		})
+	}
+
+	if rc.cache != nil {
+		if data, err := json.Marshal(red); err == nil {
+			_ = rc.cache.Set(ctx, cacheKey, string(data), 5*time.Minute)
+		}
+	}
+
+	c.Set("X-Cache", "MISS")
+	return c.JSON(red)
+}
+
+// GetMisComisiones devuelve el listado del ledger de comisiones y totales para el usuario autenticado.
+func (rc *RedController) GetMisComisiones(c *fiber.Ctx) error {
+	subStr, _ := c.Locals("sub").(string)
+	if subStr == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(models.APIError{
+			Status:  fiber.StatusUnauthorized,
+			Message: "Identidad de usuario no verificada",
+		})
+	}
+
+	var uid int
+	if _, err := fmt.Sscanf(subStr, "%d", &uid); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(models.APIError{
+			Status:  fiber.StatusBadRequest,
+			Message: "Identificador de usuario inválido",
+		})
+	}
+
+	usuario, err := rc.repo.BuscarUsuarioPorID(uid)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(models.APIError{
+			Status:  fiber.StatusNotFound,
+			Message: "Usuario no encontrado",
+		})
+	}
+
+	if usuario.ReferidoID == nil {
+		return c.JSON(fiber.Map{
+			"comisiones": []models.Comision{},
+			"pendiente":  0.0,
+			"pagado":     0.0,
+		})
+	}
+
+	comisiones, pendiente, pagado, err := rc.repo.ObtenerComisionesUsuario(c.Context(), *usuario.ReferidoID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(models.APIError{
+			Status:  fiber.StatusInternalServerError,
+			Message: "Error al consultar comisiones del usuario",
+			Details: err.Error(),
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"comisiones": comisiones,
+		"pendiente":  pendiente,
+		"pagado":     pagado,
+	})
 }

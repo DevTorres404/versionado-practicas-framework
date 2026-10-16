@@ -1,7 +1,6 @@
-// src/components/Navbar.tsx
 import { Link, useNavigate } from "react-router-dom";
-import { useCart } from "../context/CartContext";
-import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/cart";
+import { useAuth } from "../context/auth";
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -22,7 +21,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
       <div className="flex items-center gap-3 md:gap-5">
         <button
           onClick={toggleSidebar}
-          className="p-2.5 rounded-xl bg-white shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-white shadow-sm border border-slate-200 hover:bg-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
           aria-label="Alternar menú"
         >
           <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,7 +36,8 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
       <div className="flex items-center gap-5 md:gap-8">
         <Link
           to="/carrito"
-          className="relative p-3 bg-white border border-slate-200 shadow-sm hover:shadow-md rounded-xl transition-all hover:-translate-y-0.5"
+          className="relative p-3 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white border border-slate-200 shadow-sm hover:shadow-md rounded-xl transition-all hover:-translate-y-0.5"
+          aria-label="Ver carrito"
         >
           <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
           {totalItems > 0 && (
@@ -74,7 +74,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
               <div className="p-2">
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 font-bold hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
+                  className="w-full text-left px-4 py-2.5 min-h-[44px] text-sm text-red-600 font-bold hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                   Cerrar Sesión

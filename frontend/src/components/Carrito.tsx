@@ -1,9 +1,5 @@
-// src/components/Carrito.tsx
-// Carrito de compras con controles de cantidad (Tema 5):
-// - incrementQuantity / decrementQuantity desde el contexto
-// - Enlace al flujo de checkout
 import { Link } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/cart';
 
 const Carrito = () => {
   const {
@@ -54,21 +50,21 @@ const Carrito = () => {
                 </div>
 
                 <div className="flex items-center gap-4">
-                  {/* Control de cantidad */}
+                  {/* Control de cantidad con touch target >= 44px */}
                   <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden">
                     <button
                       onClick={() => decrementQuantity(item.id)}
-                      className="px-3 py-2 text-slate-600 hover:bg-slate-100 transition"
+                      className="w-11 h-11 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition text-lg font-bold"
                       aria-label="Disminuir cantidad"
                     >
                       −
                     </button>
-                    <span className="px-3 py-2 text-sm font-semibold text-slate-800 border-x border-slate-200">
+                    <span className="px-3 min-h-[44px] flex items-center justify-center text-sm font-semibold text-slate-800 border-x border-slate-200">
                       {item.cantidad}
                     </span>
                     <button
                       onClick={() => incrementQuantity(item.id)}
-                      className="px-3 py-2 text-slate-600 hover:bg-slate-100 transition"
+                      className="w-11 h-11 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition text-lg font-bold"
                       aria-label="Aumentar cantidad"
                     >
                       +
@@ -81,8 +77,9 @@ const Carrito = () => {
 
                   <button
                     onClick={() => removeFromCart(item.id)}
-                    className="text-red-500 hover:text-red-700 transition"
+                    className="w-11 h-11 flex items-center justify-center text-red-500 hover:text-red-700 transition"
                     title="Eliminar producto"
+                    aria-label="Eliminar producto"
                   >
                     🗑️
                   </button>

@@ -1,7 +1,6 @@
-// src/components/Catalogo.tsx
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/cart';
 import { getProductos } from '../services/productosService';
 import { categorias, type Producto } from '../data/productos';
 
@@ -148,7 +147,7 @@ const Catalogo = () => {
 
                 <button
                   onClick={() => addToCart(prod)}
-                  className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full min-h-[44px] bg-slate-900 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                   Añadir al Carrito

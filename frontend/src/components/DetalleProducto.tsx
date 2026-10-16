@@ -1,13 +1,8 @@
-// src/components/DetalleProducto.tsx
-// Detalle de producto con ruta dinámica (Tema 5):
-// - useParams para leer el :id de la URL (/producto/:id)
-// - Galería de imágenes con lightbox a pantalla completa
-// - Estados de carga, error y "no encontrado"
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getProductoById } from '../services/productosService';
 import type { Producto } from '../data/productos';
-import { useCart } from '../context/CartContext';
+import { useCart } from '../context/cart';
 
 const DetalleProducto = () => {
   const { id } = useParams<{ id: string }>();
@@ -124,7 +119,7 @@ const DetalleProducto = () => {
 
           <button
             onClick={handleAddToCart}
-            className={`w-full md:w-auto px-10 py-4 rounded-lg font-bold transition shadow-md ${agregado
+            className={`w-full md:w-auto min-h-[44px] flex items-center justify-center px-10 py-4 rounded-lg font-bold transition shadow-md ${agregado
                 ? "bg-green-600 text-white"
                 : "bg-indigo-600 text-white hover:bg-indigo-700"
               }`}

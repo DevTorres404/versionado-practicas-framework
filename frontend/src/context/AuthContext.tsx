@@ -1,53 +1,36 @@
 // src/context/AuthContext.tsx
-import { createContext, useContext, useState, type ReactNode } from 'react';
-
-// 1. Tipos de rol que maneja la aplicación
-export type Rol = 'admin' | 'cliente';
-
-// 2. Usuario autenticado: correo + rol (lo entrega la API en /api/login)
-export interface Usuario {
-  email: string;
-  rol: Rol;
-}
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  user: Usuario | null;
-  login: (usuario: Usuario) => void;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
-  }
-  return context;
-};
+import { useState, type ReactNode } from 'react';
+import { AuthContext, type Usuario } from './auth';
+import { getStoredSession, saveStoredSession, clearStoredSession } from '../services/http';
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [user, setUser] = useState<Usuario | null>(null);
+  // Inicializamos la sesión leyendo el localStorage ('multicatalogo_sesion')
+  const [session, setSession] = useState(() => getStoredSession());
 
-  const login = (usuario: Usuario) => {
-    setIsAuthenticated(true);
-    setUser(usuario);
+  const user = session?.user ?? null;
+  const token = session?.token ?? null;
+  const isAuthenticated = Boolean(user && token);
+
+  const login = (usuario: Usuario, jwtToken: string) => {
+    const newSession = { user: usuario, token: jwtToken };
+    saveStoredSession(newSession);
+    setSession(newSession);
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
+    clearStoredSession();
+    setSession(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+export default AuthProvider;
