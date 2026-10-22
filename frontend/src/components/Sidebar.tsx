@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/auth";
-import { BotonInstalarApp } from "./BotonInstalarApp";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -90,12 +89,14 @@ const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) =
       {/* Decorative gradient blur in background */}
       <div className="absolute top-0 left-0 w-full h-40 bg-indigo-500/20 blur-3xl rounded-full z-0 pointer-events-none"></div>
 
-      <div className={`relative z-10 p-5 md:p-6 text-xl font-extrabold flex items-center ${isCollapsed ? 'md:justify-center' : 'justify-start'} whitespace-nowrap`}>
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center mr-3 shadow-lg flex-shrink-0">
-          <span className="text-sm font-black">T</span>
+      <div className={`relative z-10 px-5 py-6 flex items-center ${isCollapsed ? 'md:justify-center' : 'justify-start'}`}>
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center mr-3 shadow-lg flex-shrink-0">
+          <span className="text-base font-black text-white">T</span>
         </div>
-        <span className={`tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 md:hidden`}>MultiCatálogo Torres</span>
-        <span className={`tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 hidden md:inline ${isCollapsed ? 'hidden md:hidden' : ''}`}>MultiCatálogo Torres</span>
+        <div className={`flex flex-col leading-tight min-w-0 ${isCollapsed ? 'md:hidden' : ''}`}>
+          <span className="text-base font-extrabold tracking-tight text-white truncate">MultiCatálogo</span>
+          <span className="text-[11px] font-bold tracking-widest text-indigo-400 uppercase">Torres</span>
+        </div>
       </div>
 
       <nav className="relative z-10 flex-1 p-4 space-y-2 overflow-y-auto">
@@ -124,12 +125,6 @@ const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) =
           );
         })}
       </nav>
-
-      {!isCollapsed && (
-        <div className="relative z-10 px-4 pb-2">
-          <BotonInstalarApp variant="sidebar" />
-        </div>
-      )}
 
       <div className="relative z-10 p-4 border-t border-white/10 m-2 rounded-xl bg-white/5 backdrop-blur-md">
         {isCollapsed ? (

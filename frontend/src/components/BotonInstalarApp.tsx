@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 
 interface BotonInstalarAppProps {
-  variant?: 'navbar' | 'sidebar';
+  variant?: 'navbar' | 'sidebar' | 'login';
 }
 
-export const BotonInstalarApp = ({ variant = 'navbar' }: BotonInstalarAppProps) => {
+export const BotonInstalarApp = ({ variant = 'login' }: BotonInstalarAppProps) => {
   const { isInstalled, canPromptNative, promptInstall } = useInstallPrompt();
   const [mostrarGuia, setMostrarGuia] = useState(false);
 
@@ -26,11 +26,34 @@ export const BotonInstalarApp = ({ variant = 'navbar' }: BotonInstalarAppProps) 
     /iPad|iPhone|iPod/.test(navigator.userAgent) &&
     !(window as unknown as { MSStream?: unknown }).MSStream;
 
+  if (variant === 'login') {
+    return (
+      <>
+        <button
+          onClick={handleClick}
+          type="button"
+          className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-indigo-50 to-fuchsia-50 hover:from-indigo-100 hover:to-fuchsia-100 border border-indigo-200 text-indigo-700 font-bold text-sm rounded-xl transition-all shadow-sm hover:shadow min-h-[44px]"
+          title="Instalar MultiCatálogo Torres como aplicación en tu pantalla de inicio"
+        >
+          <svg className="w-5 h-5 text-indigo-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Instalar MultiCatálogo Torres (App)</span>
+        </button>
+
+        {mostrarGuia && (
+          <GuiaInstalacionModal isIOS={isIOS} onClose={() => setMostrarGuia(false)} />
+        )}
+      </>
+    );
+  }
+
   if (variant === 'sidebar') {
     return (
       <>
         <button
           onClick={handleClick}
+          type="button"
           className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-500/20 to-fuchsia-500/20 border border-indigo-400/30 text-indigo-200 hover:text-white hover:bg-indigo-600/30 transition-all font-semibold text-sm group"
           title="Instalar MultiCatálogo Torres en tu dispositivo"
         >
@@ -53,6 +76,7 @@ export const BotonInstalarApp = ({ variant = 'navbar' }: BotonInstalarAppProps) 
     <>
       <button
         onClick={handleClick}
+        type="button"
         className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-700 hover:to-fuchsia-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[44px]"
         title="Instalar aplicación en tu pantalla de inicio"
       >
@@ -108,7 +132,7 @@ const GuiaInstalacionModal = ({ isIOS, onClose }: GuiaModalProps) => {
               <p className="font-medium text-slate-800">Para instalar en iPhone / iPad (Safari):</p>
               <ol className="list-decimal list-inside space-y-2">
                 <li>
-                  Tocá el botón <strong>Compartir</strong> (el icono <span className="inline-block px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200">⎋</span> con la flecha hacia arriba).
+                  Tocá el botón <strong>Compartir</strong> (icono <span className="inline-block px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200">⎋</span> con flecha hacia arriba).
                 </li>
                 <li>
                   Buscá y seleccioná <strong>"Agregar a pantalla de inicio"</strong>.

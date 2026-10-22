@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth, type Rol } from "../context/auth";
 import { apiFetch, ApiError } from "../services/http";
+import { BotonInstalarApp } from "./BotonInstalarApp";
 
 interface LoginResponse {
   token: string;
@@ -53,8 +54,11 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 border border-slate-200">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-slate-900">MultiCatálogo</h2>
-          <p className="text-slate-500 mt-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-indigo-600 to-fuchsia-600 text-white font-black text-xl shadow-lg mb-3">
+            T
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">MultiCatálogo Torres</h2>
+          <p className="text-slate-500 mt-1 text-sm">
             Ingresa a tu cuenta para continuar
           </p>
         </div>
@@ -108,6 +112,10 @@ const Login = () => {
           <Link to="/registro" className="text-indigo-600 hover:text-indigo-800 font-semibold underline">
             Regístrate aquí
           </Link>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <BotonInstalarApp variant="login" />
         </div>
 
         <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-1">

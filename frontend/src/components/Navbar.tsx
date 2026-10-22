@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/cart";
 import { useAuth } from "../context/auth";
-import { BotonInstalarApp } from "./BotonInstalarApp";
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -34,9 +33,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
         </h2>
       </div>
 
-      <div className="flex items-center gap-3 md:gap-5">
-        <BotonInstalarApp variant="navbar" />
-
+      <div className="flex items-center gap-5 md:gap-8">
         <Link
           to="/carrito"
           className="relative p-3 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white border border-slate-200 shadow-sm hover:shadow-md rounded-xl transition-all hover:-translate-y-0.5"
