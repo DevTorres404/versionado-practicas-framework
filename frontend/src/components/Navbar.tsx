@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/cart";
 import { useAuth } from "../context/auth";
+import { BotonInstalarApp } from "./BotonInstalarApp";
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -29,11 +30,13 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
           </svg>
         </button>
         <h2 className="text-slate-800 font-bold text-lg md:text-xl hidden sm:block tracking-tight">
-          {user?.rol === "admin" ? "Panel de Control" : "Tienda Elite"}
+          {user?.rol === "admin" ? "Panel de Control" : "MultiCatálogo Torres"}
         </h2>
       </div>
 
-      <div className="flex items-center gap-5 md:gap-8">
+      <div className="flex items-center gap-3 md:gap-5">
+        <BotonInstalarApp variant="navbar" />
+
         <Link
           to="/carrito"
           className="relative p-3 min-w-[44px] min-h-[44px] flex items-center justify-center bg-white border border-slate-200 shadow-sm hover:shadow-md rounded-xl transition-all hover:-translate-y-0.5"
