@@ -17,6 +17,10 @@
     {
       "platform": "webapp",
       "url": "https://multicatalogo.labtorres.me/manifest.webmanifest"
+    },
+    {
+      "platform": "webapp",
+      "url": "/manifest.webmanifest"
     }
   ],
   "icons": [

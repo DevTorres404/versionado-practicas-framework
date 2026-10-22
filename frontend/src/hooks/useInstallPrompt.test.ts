@@ -73,4 +73,25 @@ describe('useInstallPrompt', () => {
     expect(result.current.canPromptNative).toBe(false);
     expect(localStorage.getItem('pwa_installed')).toBe('true');
   });
+
+  it('detecta instalación si getInstalledRelatedApps retorna aplicaciones instaladas', async () => {
+    setupMatchMedia(false);
+
+    const getInstalledRelatedAppsMock = vi.fn().mockResolvedValue([
+      { platform: 'webapp', url: '/manifest.webmanifest' },
+    ]);
+    Object.defineProperty(navigator, 'getInstalledRelatedApps', {
+      value: getInstalledRelatedAppsMock,
+      configurable: true,
+      writable: true,
+    });
+
+    const { result } = renderHook(() => useInstallPrompt());
+
+    // Esperar a que la promesa de checkInstalledStatus resuelva
+    await vi.waitFor(() => {
+      expect(result.current.isInstalled).toBe(true);
+    });
+    expect(localStorage.getItem('pwa_installed')).toBe('true');
+  });
 });
