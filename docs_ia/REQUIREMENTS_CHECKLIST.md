@@ -4,7 +4,7 @@
 - **Hito actual:** Fase 4 — Motor Transaccional ACID, Inyección de Dependencias y Concurrencia
 - **Última tarea completada:** Fase 4 (P1–P5): Inyección de dependencias + Transacciones ACID (pedidos/pedido_items) + Goroutines para comisiones + Invalidación de caché Redis + Checkout.tsx conectado.
 - **Siguiente tarea pendiente:** Validación visual del flujo de compra y simulación de fallas ACID.
-- **Ruta paralela:** Fase 5 — PWA (instalable + offline); plan de 7 fases en `REQUIREMENTS_CHECKLIST.md` (raíz).
+- **Ruta paralela:** Fase 5 — PWA (instalable + offline) **completada** (7/7 fases); quedan sólo validaciones manuales de navegador (manifest en DevTools, prompt "Instalar app", Lighthouse) y el TLS de Caddy con un dominio real. Plan de 7 fases en `REQUIREMENTS_CHECKLIST.md` (raíz).
 
 ## Backend (Go/Fiber)
 - [x] La API devuelve el rol del usuario (admin/cliente) en login.
@@ -53,8 +53,8 @@
 - [x] F5-T3: `src/sw.ts` (Workbox `injectManifest`): precache del app shell, `navigateFallback` con denylist de `/api`, runtime caching sólo de lecturas, cachés versionadas por build.
 - [x] F5-T4: `NetworkError` tipado en `services/http.ts`, hook `useOnlineStatus`, banner de "sin conexión" en `Layout`, checkout bloqueado sin conexión.
 - [x] F5-T5: Actualización controlada (`registerType: 'prompt'`, aviso "Actualizar ahora", `skipWaiting` manual) + aviso `offlineReady`.
-- [ ] F5-T6: `frontend/Dockerfile` + `nginx.conf` con SPA fallback y `sw.js` en `no-cache` + `docker-compose` con `frontend`/`backend`/`postgres`/`redis` + TLS (Caddy) y proxy `/api` en el mismo origen.
-- [ ] F5-T7: Playwright (catálogo offline, checkout bloqueado, aviso de versión nueva) + `README.md` y `docs_ia/PROJECT_MAP.md` actualizados.
+- [x] F5-T6: `frontend/Dockerfile` + `nginx.conf` con SPA fallback y `sw.js` en `no-cache` + `docker-compose` con `frontend`/`backend`/`postgres`/`redis` + TLS (Caddy) y proxy `/api` en el mismo origen. *(verificado en vivo sobre `:8080`: deep link 200, `sw.js` no-cache, `/api/health` OK; el TLS de Caddy está validado con `caddy validate` pero pendiente de un dominio real)*
+- [x] F5-T7: Playwright (catálogo offline, checkout bloqueado, aviso de versión nueva) + `README.md` y `docs_ia/PROJECT_MAP.md` actualizados. *(9 tests E2E verdes)*
 
 ### Límite de alcance (no negociable)
 

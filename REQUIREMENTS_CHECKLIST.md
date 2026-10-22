@@ -24,8 +24,8 @@
 | **Última tarea completada** | Implementación y verificación integral de requisitos de Unidad 1 y Unidad 2 (2026-10-16) |
 | **Siguiente tarea pendiente** | Commit del trabajo actual; luego U3-T1: scaffold FastAPI `Unidad3_SaaS/` |
 | **Bloqueadores** | Ninguno. `backend-haskell` detenido (`docker start backend-haskell` restaura); `postgres-funcional` en :5433 → Postgres propio en **5434** |
-| **Ruta paralela activa** | **PWA** (instalable + offline) — 7 fases; detalle en la sección «PWA — PROGRESSIVE WEB APP» de este documento |
-| **Bloqueadores PWA** | Sin origen seguro (HTTPS) ni reverse proxy con SPA fallback → bloquea PWA-6. Frontend sin runner de tests → lo resuelve PWA-1. Chrome sólo ofrece la instalación si hay SW registrado con handler `fetch` → PWA-3 |
+| **Ruta paralela activa** | **PWA implementada** (instalable + offline) — fases PWA-1 a PWA-7 completadas y verificadas; quedan 3 validaciones manuales de navegador (manifest en DevTools, prompt "Instalar app", Lighthouse). Detalle en la sección «PWA — PROGRESSIVE WEB APP» |
+| **Bloqueadores PWA** | Ninguno de implementación. Pendiente de validación manual: manifest en DevTools, prompt "Instalar app" en Chrome y auditoría Lighthouse sobre el entorno desplegado. El `Caddyfile` está validado (`caddy validate`) pero no ejercido con un dominio real (requiere DNS + certificado) |
 
 ## Arquitectura objetivo del semestre
 
@@ -172,7 +172,7 @@ React SPA (:5173) ──► Caddy/Nginx (U4: proxy inverso + SSL)
 - [x] Iconos PNG generados: 192x192, 512x512 y 512x512 con `purpose: "maskable"` (logo con zona segura del 20%) + `apple-touch-icon` 180x180
 - [x] `index.html`: `<link rel="manifest">`, `<meta name="theme-color">`, `<meta name="color-scheme">`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-title`, `apple-touch-icon` y `viewport` con `viewport-fit=cover`
 - [x] `vite.config.ts`: `VitePWA` con `registerType: 'prompt'`, `injectManifest`, `includeAssets` (favicon + iconos) y `manifest` consumido desde `public/`
-- [ ] Manifest validado sin errores en DevTools → Application → Manifest
+- [ ] Manifest validado sin errores en DevTools → Application → Manifest *(estructura, iconos y tamaños ya cubiertos por `frontend/tests/e2e/pwa-instalable.spec.ts`; falta la inspección manual en DevTools)*
 - [x] `npm run build` emite `dist/manifest.webmanifest` y los iconos dentro de `dist/`
 
 ## PWA-3 · Service worker: app shell, navegación y runtime caching
@@ -185,8 +185,8 @@ React SPA (:5173) ──► Caddy/Nginx (U4: proxy inverso + SSL)
 - [x] Cachés versionados por hash de build; purga de cachés viejas en `activate` (`cleanupOutdatedCaches`)
 - [x] Fuentes: auto-alojar Outfit en `public/fonts` (recomendado) o, en su defecto, CacheFirst explícito — la dependencia externa de `fonts.googleapis.com` hoy rompe el offline
 - [x] SW registrado en `src/main.tsx` vía `virtual:pwa-register`
-- [ ] Verificado sobre build real (`npm run build && npm run preview`) — en dev Workbox no emite SW salvo `devOptions.enabled`
-- [ ] **Criterio de instalación:** Chrome ofrece "Instalar app" (manifest + SW activo con handler `fetch`)
+- [x] Verificado sobre build real (`npm run build && npm run preview`) — en dev Workbox no emite SW salvo `devOptions.enabled` *(E2E: `pwa-instalable.spec.ts` espera el SW `activated` y controlando la página)*
+- [ ] **Criterio de instalación:** Chrome ofrece "Instalar app" (manifest + SW activo con handler `fetch`) *(los criterios están verificados estructuralmente por los E2E; el prompt real sólo se puede comprobar a mano en Chrome)*
 
 ## PWA-4 · Resiliencia offline en la app (UX + contrato de red)
 
@@ -212,23 +212,23 @@ React SPA (:5173) ──► Caddy/Nginx (U4: proxy inverso + SSL)
 
 > Sin esta fase la PWA no existe fuera de `localhost`: el SW exige HTTPS y los deep links exigen fallback de servidor.
 
-- [ ] `frontend/Dockerfile` multi-stage (build con Node → `nginx:alpine`)
-- [ ] `frontend/nginx.conf`: `try_files $uri $uri/ /index.html` (SPA fallback **obligatorio**), `sw.js` servido con `Cache-Control: no-cache`, assets hasheados con `immutable`, `index.html` con `no-cache`
-- [ ] `docker-compose.yml` con servicios `frontend`, `backend`, `postgres` y `redis` en red común
-- [ ] Proxy `/api` → `backend:3000` en el mismo origen (elimina CORS y acota el scope del SW)
-- [ ] TLS: Caddy como terminador con Let's Encrypt automático (alineado con la arquitectura objetivo del semestre) o certificado en nginx — **origen seguro obligatorio**
-- [ ] `VITE_API_URL` apuntando al origen público en el build de producción
-- [ ] Deep link con refresh (`/producto/42`) responde 200 — no 404 — en el entorno desplegado
-- [ ] Lighthouse sobre el entorno desplegado: instalable y SW activo
+- [x] `frontend/Dockerfile` multi-stage (build con Node → `nginx:alpine`) *(healthcheck corregido a `127.0.0.1`: `localhost` resolvía a `::1` y nginx sólo escucha IPv4)*
+- [x] `frontend/nginx.conf`: `try_files $uri $uri/ /index.html` (SPA fallback **obligatorio**), `sw.js` servido con `Cache-Control: no-cache`, assets hasheados con `immutable`, `index.html` con `no-cache`
+- [x] `docker-compose.yml` con servicios `frontend`, `backend`, `postgres` y `redis` en red común
+- [x] Proxy `/api` → `backend:3000` en el mismo origen (elimina CORS y acota el scope del SW) *(verificado: `/api/health` responde `{"database":"ok","redis":"ok","status":"ok"}` a través de `:8080`)*
+- [ ] TLS: Caddy como terminador con Let's Encrypt automático (alineado con la arquitectura objetivo del semestre) o certificado en nginx — **origen seguro obligatorio** *(`Caddyfile` validado con `caddy validate`; no ejercido con un dominio real)*
+- [x] `VITE_API_URL` apuntando al origen público en el build de producción *(modo mismo origen: `VITE_API_URL='/'` → base `''` → URLs relativas)*
+- [x] Deep link con refresh (`/producto/42`) responde 200 — no 404 — en el entorno desplegado
+- [ ] Lighthouse sobre el entorno desplegado: instalable y SW activo *(no ejecutado)*
 
 ## PWA-7 · E2E, auditoría y documentación
 
-- [ ] Playwright instalado; test de humo: SW registrado tras `build` + `preview`
-- [ ] E2E: navegación offline del catálogo con banner visible
-- [ ] E2E: checkout bloqueado offline — **no** se envía `POST /api/checkout`
-- [ ] E2E: aviso de versión nueva tras un build nuevo
-- [ ] `README.md` y `docs_ia/PROJECT_MAP.md` actualizados (service worker, manifest, nuevos servicios PWA)
-- [ ] `docs_ia/REQUIREMENTS_CHECKLIST.md` sincronizado con esta sección
+- [x] Playwright instalado; test de humo: SW registrado tras `build` + `preview` *(`playwright.config.ts` + `test:e2e`; 9 tests verdes)*
+- [x] E2E: navegación offline del catálogo con banner visible
+- [x] E2E: checkout bloqueado offline — **no** se envía `POST /api/checkout`
+- [x] E2E: aviso de versión nueva tras un build nuevo
+- [x] `README.md` y `docs_ia/PROJECT_MAP.md` actualizados (service worker, manifest, nuevos servicios PWA)
+- [x] `docs_ia/REQUIREMENTS_CHECKLIST.md` sincronizado con esta sección
 
 ### Riesgos técnicos identificados
 
