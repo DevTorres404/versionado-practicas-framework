@@ -47,7 +47,10 @@ EXPOSE 80
 
 # `wget` viene en la imagen alpine: si nginx no responde, el contenedor queda
 # marcado como unhealthy y el orquestador lo puede reiniciar.
+# Se sondea por IPv4 explícita porque `localhost` resuelve primero a `::1`, y
+# `nginx.conf` sólo escucha en IPv4: el chequeo fallaba con "Connection refused"
+# aunque nginx estuviera sirviendo bien.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost/ >/dev/null || exit 1
+  CMD wget -qO- http://127.0.0.1/ >/dev/null || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
