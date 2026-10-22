@@ -86,20 +86,17 @@ const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) =
         ${isCollapsed ? "md:w-20" : "md:w-64"}
       `}
     >
-      {/* Decorative gradient blur in background */}
-      <div className="absolute top-0 left-0 w-full h-40 bg-teal-500/15 blur-3xl rounded-full z-0 pointer-events-none"></div>
-
-      <div className={`relative z-10 px-5 py-6 flex items-center ${isCollapsed ? 'md:justify-center' : 'justify-start'}`}>
-        <div className="w-10 h-10 rounded-xl p-0.5 bg-gradient-to-tr from-indigo-900 to-cyan-400 shadow-lg shadow-cyan-950/30 flex items-center justify-center mr-3 flex-shrink-0">
-          <img src="/logo-torres.png" alt="Torres" className="w-full h-full object-cover rounded-[10px] bg-white" />
+      <div className={`relative z-10 px-5 py-6 flex items-center border-b border-slate-800 ${isCollapsed ? 'md:justify-center' : 'justify-start'}`}>
+        <div className="w-10 h-10 rounded-xl bg-white p-1 flex items-center justify-center mr-3 flex-shrink-0 shadow-sm border border-slate-700">
+          <img src="/logo-torres.png" alt="Torres" className="w-full h-full object-contain" />
         </div>
         <div className={`flex flex-col leading-tight min-w-0 ${isCollapsed ? 'md:hidden' : ''}`}>
           <span className="text-base font-extrabold tracking-tight text-white truncate">MultiCatálogo</span>
-          <span className="text-[11px] font-black tracking-widest text-cyan-400 uppercase">Torres</span>
+          <span className="text-[11px] font-bold tracking-widest text-cyan-400 uppercase">Torres</span>
         </div>
       </div>
 
-      <nav className="relative z-10 flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="relative z-10 flex-1 p-4 space-y-1.5 overflow-y-auto">
         {items.map((item) => {
           const esActivo = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
 
@@ -108,17 +105,17 @@ const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) =
               key={item.to}
               to={item.to}
               onClick={closeMobileMenu}
-              className={`flex items-center gap-4 p-3 rounded-xl transition-all duration-200 group ${
+              className={`flex items-center gap-3.5 p-3 rounded-lg transition-colors group ${
                 esActivo
-                  ? "bg-gradient-to-r from-indigo-800 to-teal-600 shadow-md shadow-teal-500/20 text-white"
-                  : "text-slate-400 hover:bg-white/5 hover:text-white"
+                  ? "bg-cyan-600 text-white font-semibold shadow-sm"
+                  : "text-slate-400 hover:bg-slate-800 hover:text-white"
               } ${isCollapsed ? 'md:justify-center' : ''}`}
               title={item.title}
             >
-              <svg className={`w-6 h-6 flex-shrink-0 transition-transform duration-200 ${esActivo ? '' : 'group-hover:scale-110'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
               </svg>
-              <span className={`font-medium tracking-wide ${isCollapsed ? 'md:hidden' : ''}`}>
+              <span className={`font-medium text-sm tracking-wide ${isCollapsed ? 'md:hidden' : ''}`}>
                 {item.label}
               </span>
             </Link>
@@ -126,15 +123,15 @@ const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) =
         })}
       </nav>
 
-      <div className="relative z-10 p-4 border-t border-white/10 m-2 rounded-xl bg-white/5 backdrop-blur-md">
+      <div className="relative z-10 p-3.5 border-t border-slate-800 m-2 rounded-lg bg-slate-800/60">
         {isCollapsed ? (
-          <p className="text-center text-[10px] uppercase font-bold tracking-widest text-cyan-300">{user?.rol}</p>
+          <p className="text-center text-[10px] uppercase font-bold tracking-widest text-cyan-400">{user?.rol}</p>
         ) : (
           <div className="flex flex-col">
-            <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Perfil Activo</p>
+            <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-0.5 font-medium">Perfil Activo</p>
             <p className="text-sm font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
-              <span className="uppercase tracking-widest bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-cyan-400">{user?.rol}</span>
+              <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+              <span className="uppercase tracking-wider text-cyan-400 text-xs font-bold">{user?.rol}</span>
             </p>
           </div>
         )}

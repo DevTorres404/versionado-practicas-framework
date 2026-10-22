@@ -32,14 +32,12 @@ export const BotonInstalarApp = ({ variant = 'login' }: BotonInstalarAppProps) =
         <button
           onClick={handleClick}
           type="button"
-          className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-teal-50 via-cyan-50 to-indigo-50 hover:from-teal-100 hover:to-indigo-100 border border-teal-300 text-teal-900 font-extrabold text-sm rounded-xl transition-all shadow-sm hover:shadow-md min-h-[46px] group"
+          className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-white hover:bg-slate-50 border-2 border-cyan-600 text-cyan-900 font-bold text-sm rounded-lg transition-colors min-h-[46px]"
           title="Instalar MultiCatálogo Torres como aplicación en tu pantalla de inicio"
         >
-          <div className="w-6 h-6 rounded-lg bg-teal-600 text-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </div>
+          <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
           <span>Instalar MultiCatálogo Torres (App)</span>
         </button>
 
@@ -56,14 +54,12 @@ export const BotonInstalarApp = ({ variant = 'login' }: BotonInstalarAppProps) =
         <button
           onClick={handleClick}
           type="button"
-          className="w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-indigo-500/20 to-fuchsia-500/20 border border-indigo-400/30 text-indigo-200 hover:text-white hover:bg-indigo-600/30 transition-all font-semibold text-sm group"
+          className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-800 text-slate-200 hover:text-white hover:bg-slate-700 transition-colors font-semibold text-sm border border-slate-700"
           title="Instalar MultiCatálogo Torres en tu dispositivo"
         >
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/30 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-            <svg className="w-4 h-4 text-indigo-300 group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-          </div>
+          <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
           <span className="truncate">Instalar App</span>
         </button>
 
@@ -79,10 +75,10 @@ export const BotonInstalarApp = ({ variant = 'login' }: BotonInstalarAppProps) =
       <button
         onClick={handleClick}
         type="button"
-        className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-fuchsia-600 hover:from-indigo-700 hover:to-fuchsia-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[44px]"
+        className="flex items-center gap-2 px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs sm:text-sm font-bold rounded-lg transition-colors min-h-[44px]"
         title="Instalar aplicación en tu pantalla de inicio"
       >
-        <svg className="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
         <span>Instalar App</span>
@@ -107,12 +103,12 @@ const GuiaInstalacionModal = ({ isIOS, onClose }: GuiaModalProps) => {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-slate-800 border border-slate-100"
+        className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-slate-800 border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <h3 className="font-extrabold text-base flex items-center gap-2 text-indigo-700">
-            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 className="font-extrabold text-base flex items-center gap-2 text-[#0a196f]">
+            <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
             </svg>
             Instalar MultiCatálogo Torres
@@ -160,7 +156,7 @@ const GuiaInstalacionModal = ({ isIOS, onClose }: GuiaModalProps) => {
         <div className="pt-3 border-t border-slate-100 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors"
+            className="px-4 py-2 bg-[#0a196f] text-white rounded-lg text-sm font-bold hover:bg-[#071355] transition-colors"
           >
             Entendido
           </button>

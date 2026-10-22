@@ -47,25 +47,22 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-8 relative overflow-hidden">
-      {/* Luces ambientales en Índigo y Turquesa */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-900/30 blur-[130px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-teal-500/25 blur-[140px] pointer-events-none" />
-
-      <div className="max-w-md w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-8 border border-white/40 relative z-10 animate-fade-in">
-        {/* Cabecera con Logotipo Oficial Torres */}
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4 py-8">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+        {/* Cabecera Minimalista */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-3">
-            <div className="w-20 h-20 rounded-2xl p-1 bg-gradient-to-tr from-indigo-900 via-teal-600 to-cyan-400 shadow-xl shadow-cyan-900/20 flex items-center justify-center">
-              <img
-                src="/logo-torres.png"
-                alt="Logotipo Torres"
-                className="w-full h-full object-cover rounded-xl bg-white"
-              />
-            </div>
+          <div className="flex justify-center mb-4">
+            <img
+              src="/logo-torres.png"
+              alt="Logotipo Torres"
+              className="w-20 h-20 object-contain"
+            />
+          </div>
+          <div className="inline-block px-3 py-1 bg-cyan-50 border border-cyan-200 rounded-full mb-3">
+            <span className="text-xs font-bold text-cyan-800 tracking-wider uppercase">Cosmética & Red</span>
           </div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-            MultiCatálogo <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 via-teal-600 to-cyan-600">Torres</span>
+            MultiCatálogo Torres
           </h2>
           <p className="text-slate-500 mt-1 text-sm font-medium">
             Ingresa a tu cuenta para continuar
@@ -73,7 +70,7 @@ const Login = () => {
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3.5 rounded-xl text-sm mb-6 text-center border border-red-200/80 font-medium">
+          <div className="bg-red-50 text-red-700 p-3.5 rounded-lg text-sm mb-6 text-center border border-red-200 font-medium">
             {error}
           </div>
         )}
@@ -87,7 +84,7 @@ const Login = () => {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition text-slate-800 placeholder-slate-400 text-sm font-medium"
+              className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-[#0a196f] focus:ring-1 focus:ring-[#0a196f] outline-none transition text-slate-800 placeholder-slate-400 text-sm font-medium"
               placeholder="admin@upse.edu.ec"
               required
             />
@@ -101,7 +98,7 @@ const Login = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/60 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition text-slate-800 placeholder-slate-400 text-sm font-medium"
+              className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-[#0a196f] focus:ring-1 focus:ring-[#0a196f] outline-none transition text-slate-800 placeholder-slate-400 text-sm font-medium"
               placeholder="••••••"
               required
             />
@@ -110,7 +107,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-900 via-teal-700 to-cyan-600 hover:from-indigo-950 hover:via-teal-800 hover:to-cyan-700 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-teal-900/20 hover:shadow-teal-900/30 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 min-h-[46px] tracking-wide"
+            className="w-full bg-[#0a196f] hover:bg-[#071355] text-white font-bold py-3.5 px-4 rounded-lg transition-colors disabled:opacity-50 min-h-[46px] tracking-wide"
           >
             {loading ? "Validando credenciales..." : "Iniciar Sesión"}
           </button>
@@ -118,25 +115,25 @@ const Login = () => {
 
         <div className="mt-6 text-center text-sm text-slate-600">
           ¿No tienes una cuenta?{" "}
-          <Link to="/registro" className="text-teal-700 hover:text-indigo-900 font-bold underline transition-colors">
+          <Link to="/registro" className="text-cyan-700 hover:text-[#0a196f] font-bold underline transition-colors">
             Regístrate aquí
           </Link>
         </div>
 
-        {/* Botón Prominente para Instalar PWA */}
-        <div className="mt-6 pt-6 border-t border-slate-100">
+        {/* Botón PWA Minimalista */}
+        <div className="mt-6 pt-6 border-t border-slate-200">
           <BotonInstalarApp variant="login" />
         </div>
 
-        {/* Credenciales de Prueba */}
-        <div className="mt-6 p-4 bg-slate-50/90 rounded-xl border border-slate-200/70 text-xs text-slate-600 space-y-1.5">
-          <p className="font-bold text-slate-800 uppercase tracking-wider text-[11px] mb-1">Cuentas de prueba:</p>
-          <div className="flex items-center justify-between py-0.5">
-            <span className="font-semibold text-indigo-950">👑 Admin:</span>
+        {/* Cuentas de Prueba */}
+        <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-2">
+          <p className="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Cuentas de prueba:</p>
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-[#0a196f]">👑 Admin:</span>
             <span className="font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700">admin@upse.edu.ec / 123456</span>
           </div>
-          <div className="flex items-center justify-between py-0.5">
-            <span className="font-semibold text-teal-900">🛍️ Cliente:</span>
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-cyan-800">🛍️ Cliente:</span>
             <span className="font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700">cliente@upse.edu.ec / 123456</span>
           </div>
         </div>
