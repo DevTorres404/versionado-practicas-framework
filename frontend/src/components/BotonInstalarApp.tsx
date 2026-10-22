@@ -32,12 +32,14 @@ export const BotonInstalarApp = ({ variant = 'login' }: BotonInstalarAppProps) =
         <button
           onClick={handleClick}
           type="button"
-          className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-indigo-50 to-fuchsia-50 hover:from-indigo-100 hover:to-fuchsia-100 border border-indigo-200 text-indigo-700 font-bold text-sm rounded-xl transition-all shadow-sm hover:shadow min-h-[44px]"
+          className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-gradient-to-r from-teal-50 via-cyan-50 to-indigo-50 hover:from-teal-100 hover:to-indigo-100 border border-teal-300 text-teal-900 font-extrabold text-sm rounded-xl transition-all shadow-sm hover:shadow-md min-h-[46px] group"
           title="Instalar MultiCatálogo Torres como aplicación en tu pantalla de inicio"
         >
-          <svg className="w-5 h-5 text-indigo-600 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
+          <div className="w-6 h-6 rounded-lg bg-teal-600 text-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </div>
           <span>Instalar MultiCatálogo Torres (App)</span>
         </button>
 

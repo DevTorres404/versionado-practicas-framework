@@ -11,7 +11,7 @@
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
   "background_color": "#f8fafc",
-  "theme_color": "#863bff",
+  "theme_color": "#0a196f",
   "categories": ["shopping", "business", "lifestyle"],
   "icons": [
     { "src": "/pwa-icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
