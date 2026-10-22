@@ -107,7 +107,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#0a196f] hover:bg-[#071355] text-white font-bold py-3.5 px-4 rounded-lg transition-colors disabled:opacity-50 min-h-[46px] tracking-wide"
+            className="w-full bg-[#0a196f] hover:bg-[#071355] text-white font-bold py-3.5 px-4 rounded-lg transition-colors disabled:opacity-50 min-h-[46px] tracking-wide cursor-pointer"
           >
             {loading ? "Validando credenciales..." : "Iniciar Sesión"}
           </button>
@@ -120,21 +120,75 @@ const Login = () => {
           </Link>
         </div>
 
-        {/* Botón PWA Minimalista */}
-        <div className="mt-6 pt-6 border-t border-slate-200">
-          <BotonInstalarApp variant="login" />
-        </div>
+        {/* Botón PWA */}
+        <BotonInstalarApp variant="login" />
 
-        {/* Cuentas de Prueba */}
-        <div className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-2">
-          <p className="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Cuentas de prueba:</p>
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-[#0a196f]">👑 Admin:</span>
-            <span className="font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700">admin@upse.edu.ec / 123456</span>
+        {/* Cuentas de Prueba sin emojis y con autocompletado */}
+        <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">
+                Credenciales de prueba
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-600 font-medium">
+              Clic para autocompletar
+            </span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-cyan-800">🛍️ Cliente:</span>
-            <span className="font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-700">cliente@upse.edu.ec / 123456</span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail("admin@upse.edu.ec");
+                setPassword("123456");
+              }}
+              className="text-left p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer group shadow-xs"
+              title="Cargar credenciales de Administrador"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-[#0a196f] text-white">
+                  Admin
+                </span>
+                <span className="text-[10px] font-medium text-slate-600 group-hover:text-[#0a196f] transition-colors">
+                  Autocompletar
+                </span>
+              </div>
+              <p className="font-mono text-xs text-slate-800 font-semibold truncate">
+                admin@upse.edu.ec
+              </p>
+              <p className="font-mono text-[11px] text-slate-700 mt-0.5">
+                Clave: <span className="font-medium text-slate-700">123456</span>
+              </p>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setEmail("cliente@upse.edu.ec");
+                setPassword("123456");
+              }}
+              className="text-left p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer group shadow-xs"
+              title="Cargar credenciales de Cliente"
+            >
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-cyan-700 text-white">
+                  Cliente
+                </span>
+                <span className="text-[10px] font-medium text-slate-600 group-hover:text-cyan-800 transition-colors">
+                  Autocompletar
+                </span>
+              </div>
+              <p className="font-mono text-xs text-slate-800 font-semibold truncate">
+                cliente@upse.edu.ec
+              </p>
+              <p className="font-mono text-[11px] text-slate-700 mt-0.5">
+                Clave: <span className="font-medium text-slate-700">123456</span>
+              </p>
+            </button>
           </div>
         </div>
       </div>

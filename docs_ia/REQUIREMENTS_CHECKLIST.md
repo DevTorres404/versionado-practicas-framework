@@ -2,9 +2,9 @@
 
 ## Estado General
 - **Hito actual:** Fase 4 — Motor Transaccional ACID, Inyección de Dependencias y Concurrencia
-- **Última tarea completada:** Fase 4 (P1–P5): Inyección de dependencias + Transacciones ACID (pedidos/pedido_items) + Goroutines para comisiones + Invalidación de caché Redis + Checkout.tsx conectado.
+- **Última tarea completada:** Cierre de sesión responsive en celular (menú táctil en `Navbar.tsx` y botón explícito en drawer `Sidebar.tsx`) + Calentamiento proactivo de datos offline al instalar la PWA (`cacheWarming.ts` con precarga de catálogo y red).
 - **Siguiente tarea pendiente:** Validación visual del flujo de compra y simulación de fallas ACID.
-- **Ruta paralela:** Fase 5 — PWA (instalable + offline) **completada** (7/7 fases); quedan sólo validaciones manuales de navegador (manifest en DevTools, prompt "Instalar app", Lighthouse) y el TLS de Caddy con un dominio real. Plan de 7 fases en `REQUIREMENTS_CHECKLIST.md` (raíz).
+- **Ruta paralela:** Fase 5 — PWA (instalable + offline) **completada** (7/7 fases + ciclo de vida de instalación/desinstalación y warming offline validado con tests unitarios); quedan sólo validaciones manuales de navegador (manifest en DevTools, prompt "Instalar app", Lighthouse) y el TLS de Caddy con un dominio real. Plan de 7 fases en `REQUIREMENTS_CHECKLIST.md` (raíz).
 
 ## Backend (Go/Fiber)
 - [x] La API devuelve el rol del usuario (admin/cliente) en login.

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/auth";
 
 interface SidebarProps {
@@ -71,10 +71,17 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const items = NAV_ITEMS.filter((item) => !item.soloAdmin || user?.rol === "admin");
+
+  const handleLogout = () => {
+    logout();
+    closeMobileMenu();
+    navigate("/login");
+  };
 
   return (
     <aside
@@ -123,17 +130,48 @@ const Sidebar = ({ isCollapsed, isMobileOpen, closeMobileMenu }: SidebarProps) =
         })}
       </nav>
 
-      <div className="relative z-10 p-3.5 border-t border-slate-800 m-2 rounded-lg bg-slate-800/60">
+      {/* Pie del menú con perfil y botón cerrar sesión visible en celular y escritorio */}
+      <div className="relative z-10 p-3.5 border-t border-slate-800 m-2 rounded-lg bg-slate-800/60 space-y-3">
         {isCollapsed ? (
-          <p className="text-center text-[10px] uppercase font-bold tracking-widest text-cyan-400">{user?.rol}</p>
-        ) : (
-          <div className="flex flex-col">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-0.5 font-medium">Perfil Activo</p>
-            <p className="text-sm font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
-              <span className="uppercase tracking-wider text-cyan-400 text-xs font-bold">{user?.rol}</span>
-            </p>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-center text-[10px] uppercase font-bold tracking-widest text-cyan-400">{user?.rol}</p>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700/60 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
+              title="Cerrar Sesión"
+              aria-label="Cerrar Sesión"
+            >
+              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
           </div>
+        ) : (
+          <>
+            <div className="flex flex-col">
+              <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-0.5 font-medium">Perfil Activo</p>
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-cyan-400">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                  {user?.rol}
+                </span>
+                <span className="text-slate-400 truncate max-w-[110px]" title={user?.email}>
+                  {user?.email.split('@')[0]}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 text-xs font-bold text-red-400 bg-red-950/30 hover:bg-red-900/40 border border-red-800/40 rounded-lg transition-colors cursor-pointer min-h-[42px]"
+            >
+              <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Cerrar Sesión</span>
+            </button>
+          </>
         )}
       </div>
     </aside>
