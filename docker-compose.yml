@@ -1,0 +1,117 @@
+# ---------------------------------------------------------------------------
+# Stack completo de MultiCatálogo: postgres + redis + backend + frontend.
+#
+#   docker compose up -d        (desde la raíz del repo)
+#
+# `backend/docker-compose.yml` sigue siendo el flujo de SÓLO backend
+# (`docker compose -f backend/docker-compose.yml up -d`): se mantiene aparte a
+# propósito, aunque duplique la definición de postgres/redis/backend. Así el
+# backend se puede levantar y probar sin reconstruir la imagen del frontend.
+#
+# Caddy (el terminador TLS, `Caddyfile` en la raíz) NO está en este archivo:
+# necesita los puertos 80/443 del host, así que corre aparte y se conecta a
+# la red `multicatalogo` (ver el Caddyfile para el comando exacto).
+# ---------------------------------------------------------------------------
+
+name: multicatalogo
+
+services:
+  # --- Base de datos ------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-multicatalogo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-multicatalogo}
+      POSTGRES_DB: ${POSTGRES_DB:-multicatalogo}
+    ports:
+      # Puerto del host: se puede remapear con POSTGRES_PORT.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Schema + seed: se ejecutan en el primer arranque del volumen.
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-multicatalogo} -d ${POSTGRES_DB:-multicatalogo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - multicatalogo
+
+  # --- Caché --------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - multicatalogo
+
+  # --- API Go/Fiber -------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    # `backend/.env` EXISTE en el checkout local (está git-ignored) y es la
+    # fuente de configuración de la app (mismas claves que config/db.go y
+    # config/redis.go): se inyecta tal cual. Si en una máquina nueva no está,
+    # crearlo a partir de `backend/.env.example` (sin ese archivo, compose
+    # falla al resolver `env_file`).
+    env_file:
+      - ./backend/.env
+    environment:
+      # Estos valores pisan los del `.env`: dentro de compose la app debe
+      # apuntar a los servicios por su nombre de red, no a `localhost`.
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-multicatalogo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-multicatalogo}
+      POSTGRES_DB: ${POSTGRES_DB:-multicatalogo}
+      POSTGRES_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 3000
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - multicatalogo
+
+  # --- Frontend (nginx) ---------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # "/" = mismo origen: la app pide a `/api/...` y nginx lo reenvía al
+        # backend. Es lo que exige el service worker (mismo origen) y mantiene
+        # el JWT en un único origen.
+        VITE_API_URL: "/"
+    restart: unless-stopped
+    ports:
+      # Host ${FRONTEND_PORT:-8080} -> puerto 80 del contenedor (nginx).
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+    networks:
+      - multicatalogo
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  multicatalogo:
+    driver: bridge

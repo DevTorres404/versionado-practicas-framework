@@ -1,0 +1,38 @@
+# Contexto de build del frontend: sólo lo necesario para compilar.
+# Anything local (dependencias instaladas, builds previos, secretos) queda
+# fuera de la imagen.
+
+# Dependencias: se reinstalan con `npm ci` dentro de la imagen.
+node_modules
+npm-debug.log*
+
+# Build previo: la imagen lo genera en su etapa de build.
+dist
+dist-ssr
+
+# Historial y metadatos del repo.
+.git
+.gitignore
+.gitattributes
+
+# Secretos y configuración local: la imagen se compila con los ARG/ENV del
+# build (VITE_API_URL), nunca con el `.env` del desarrollador.
+.env
+.env.*
+
+# Salidas de tests y cobertura.
+coverage
+test-results
+playwright-report
+blob-report
+.playwright
+
+# Editores y sistema operativo.
+.vscode
+.idea
+*.log
+.DS_Store
+Thumbs.db
+
+# Documentación que no participa del build.
+README.md

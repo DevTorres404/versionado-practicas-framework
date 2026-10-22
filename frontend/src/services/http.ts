@@ -80,12 +80,34 @@ export const clearStoredSession = (): void => {
   }
 };
 
-// Base URL configurada dinámicamente mediante variables de entorno Vite
+/**
+ * Base URL configurada dinámicamente mediante variables de entorno Vite.
+ *
+ * Tres modos, según `VITE_API_URL`:
+ *
+ * - `'/'` → base vacía (mismo origen). Es el modo del despliegue: el proxy
+ *   de nginx sirve `/api` desde el mismo origen que la app, así que el JWT
+ *   vive en un único origen y el service worker puede cachear la API.
+ * - Un valor absoluto (`'https://api.ejemplo.com/'`) → se usa tal cual,
+ *   sin la barra final.
+ * - Vacío o ausente → el default de desarrollo (`http://localhost:3000`).
+ */
 export const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl && typeof envUrl === 'string' && envUrl.trim() !== '') {
-    return envUrl.replace(/\/+$/, '');
+
+  if (typeof envUrl === 'string') {
+    const trimmed = envUrl.trim();
+
+    // Modo mismo-origen: base vacía ⇒ URLs relativas (`/api/productos`).
+    if (trimmed === '/') {
+      return '';
+    }
+
+    if (trimmed !== '') {
+      return trimmed.replace(/\/+$/, '');
+    }
   }
+
   return 'http://localhost:3000';
 };
 
@@ -96,6 +118,8 @@ export const apiFetch = async <T = unknown>(
 ): Promise<T> => {
   const baseUrl = getApiBaseUrl();
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  // Con base vacía (modo mismo-origen) la URL queda relativa
+  // (`/api/productos`): `fetch` la resuelve contra el origen de la página.
   const url = `${baseUrl}${cleanEndpoint}`;
 
   const headers = new Headers(options.headers || {});
