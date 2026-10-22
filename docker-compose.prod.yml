@@ -1,0 +1,167 @@
+# ---------------------------------------------------------------------------
+# Stack COMPLETO de producción de MultiCatálogo:
+#   postgres + redis + backend + frontend.
+#
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Es un archivo AUTOCONTENIDO a propósito: NO se combina con
+# `docker-compose.yml` (ese es el de desarrollo y publica puertos en el host).
+# Tampoco usa `!reset` / `!override`, que dependen de la versión de Compose:
+# lo que ves acá es exactamente lo que se despliega.
+#
+# Diferencias con el compose de desarrollo:
+#   1. Sólo `frontend` publica puerto en el host bindeado a `127.0.0.1:8080` para
+#      que Cloudflare Tunnel (cloudflared) sirva el tráfico con TLS.
+#      Postgres, Redis y el backend viven en la red interna: nadie los alcanza
+#      directamente desde internet.
+#   2. La red se llama EXACTAMENTE `multicatalogo` (bloque `networks` al final)
+#      y no `<proyecto>_<red>`.
+#   3. Las variables críticas se exigen con `${VAR:?...}`: si falta una,
+#      `docker compose` se niega a arrancar y dice cuál falta, en vez de
+#      levantar el stack con credenciales por defecto.
+#   4. Cada servicio tiene `restart: unless-stopped` y logs acotados para que no
+#      llenen el disco; postgres, redis, backend y frontend además tienen
+#      `healthcheck`, y el arranque se ordena con `depends_on`.
+# ---------------------------------------------------------------------------
+
+name: multicatalogo
+
+# Límite de logs compartido: sin esto, un contenedor que escribe mucho (nginx
+# con escaneos, el backend con errores en loop) puede llenar el disco y tumbar
+# el servidor. 10 MB x 3 archivos por servicio es un techo razonable.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  # --- Base de datos ------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-multicatalogo}
+      # Sin password no arranca: es la credencial que usa el backend y, si
+      # quedara el default, cualquiera con acceso a la red interna entraría.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definí POSTGRES_PASSWORD en el .env de la raíz (ver DEPLOY.md)}
+      POSTGRES_DB: ${POSTGRES_DB:-multicatalogo}
+    # NADA de `ports:`: la base sólo se alcanza dentro de la red `multicatalogo`.
+    volumes:
+      # Schema + seed: se ejecutan SOLO en el primer arranque del volumen.
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # El backend arranca recién cuando Postgres acepta conexiones: evita el
+      # loop de reinicios por "connection refused" en el primer deploy.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-multicatalogo} -d ${POSTGRES_DB:-multicatalogo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    logging: *default-logging
+    networks:
+      - multicatalogo
+
+  # --- Caché --------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    logging: *default-logging
+    networks:
+      - multicatalogo
+
+  # --- API Go/Fiber -------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    # `backend/.env` es OBLIGATORIO: es la fuente de JWT_SECRET y del resto de
+    # la configuración de la app (config/db.go, config/redis.go, main.go).
+    # Sin ese archivo, `docker compose up` falla al resolver `env_file`.
+    env_file:
+      - ./backend/.env
+    environment:
+      # Estos valores pisan los del `.env`: dentro de compose la app apunta a
+      # los servicios por nombre de red, nunca a `localhost`.
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: ${POSTGRES_USER:-multicatalogo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definí POSTGRES_PASSWORD en el .env de la raíz (ver DEPLOY.md)}
+      POSTGRES_DB: ${POSTGRES_DB:-multicatalogo}
+      POSTGRES_SSLMODE: disable
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 3000
+      # JWT_SECRET y APP_ENV NO se fijan acá: salen de `backend/.env` (ver
+      # DEPLOY.md 3.1). Si JWT_SECRET queda con el valor del repo, cualquiera
+      # puede firmar tokens válidos: es lo primero que hay que cambiar.
+    # Sin `ports:`: el API sólo se consume a través de nginx (`/api`), que está
+    # en la misma red. Exponer 3000 en el host sería saltarse el proxy.
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # `127.0.0.1` y no `localhost`: dentro del contenedor `localhost` puede
+      # resolver a `::1` (IPv6) y el binario escucha en IPv4; la sonda daría
+      # "connection refused" con el backend perfectamente sano.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging: *default-logging
+    networks:
+      - multicatalogo
+
+  # --- Frontend (nginx) ---------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # "/" = mismo origen: la app pide `/api/...` y nginx lo reenvía al
+        # backend. Es lo que exige el service worker y mantiene el JWT en un
+        # único origen. En producción NUNCA va una URL absoluta.
+        VITE_API_URL: "/"
+    restart: unless-stopped
+    ports:
+      # Expuesto en localhost del host: Cloudflare Tunnel (cloudflared) toma
+      # este puerto y lo publica seguro con TLS al mundo. El bind a 127.0.0.1
+      # impide el acceso directo por IP saltándose el túnel.
+      - "127.0.0.1:${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # Mismo detalle que en el backend: `127.0.0.1` para no depender de cómo
+      # resuelve `localhost` (nginx escucha en IPv4).
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging: *default-logging
+    networks:
+      - multicatalogo
+
+volumes:
+  # Datos persistentes de Postgres y Redis
+  pgdata:
+  redisdata:
+
+networks:
+  multicatalogo:
+    driver: bridge
+    # `name:` fija el nombre REAL de la red: `multicatalogo`, sin el prefijo del
+    # proyecto. Así el nombre no depende de cómo se invoque compose y Caddy
+    # siempre resuelve `frontend` por DNS interno.
+    name: multicatalogo
