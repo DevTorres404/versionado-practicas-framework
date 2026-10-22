@@ -142,14 +142,19 @@ npm run lint        # ESLint
 docker compose up -d      # desde la raíz del repositorio
 ```
 
-Levanta backend (Go/Fiber), PostgreSQL, Redis, frontend (nginx) y **Caddy como
-terminador TLS**. El nginx de `frontend/nginx.conf` proxyea `/api` hacia el
-backend en el mismo origen y resuelve los deep links con fallback a `index.html`.
+Levanta backend (Go/Fiber), PostgreSQL, Redis y frontend (nginx). El nginx de
+`frontend/nginx.conf` proxyea `/api` hacia el backend en el mismo origen y
+resuelve los deep links con fallback a `index.html`.
+
+**Caddy NO está en ese compose**: es el terminador TLS y corre aparte porque
+necesita los puertos 80/443 del host. El comando exacto, las variables
+(`APP_HOST`, `ACME_EMAIL`), el `.env` obligatorio del backend y la operación en
+un servidor están en [`DEPLOY.md`](DEPLOY.md).
 
 **El service worker exige un origen seguro (HTTPS).** `localhost` es la única
 excepción que los navegadores aceptan, así que en local la PWA se registra y
 funciona igual; en producción, sin TLS no se registra el worker y no hay
-instalación ni modo offline (por eso el `Caddyfile` termina TLS).
+instalación ni modo offline.
 
 ### Dónde vive cada pieza
 

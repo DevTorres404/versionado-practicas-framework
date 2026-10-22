@@ -27,11 +27,16 @@
 #   Caddy no usa los puertos publicados: dentro de la red de compose el
 #   frontend se alcanza en `frontend:80`.
 #     docker run -d --name multicatalogo-caddy \
-#       --network multicatalogo -p 80:80 -p 443:443 \
+#       --restart unless-stopped \
+#       --network multicatalogo_multicatalogo -p 80:80 -p 443:443 \
 #       -e APP_HOST=app.ejemplo.com -e ACME_EMAIL=dev@ejemplo.com \
 #       -v $PWD/Caddyfile:/etc/caddy/Caddyfile:ro \
 #       -v multicatalogo_caddy_data:/data \
 #       caddy:2-alpine
+#
+# El nombre de la red es `<proyecto>_<red>`: el proyecto y la red del compose
+# se llaman `multicatalogo`, así que la red real es
+# `multicatalogo_multicatalogo` (ver `docker network ls`).
 # ---------------------------------------------------------------------------
 
 {$APP_HOST:localhost} {
