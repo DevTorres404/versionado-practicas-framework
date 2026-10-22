@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/auth';
 import { useCart } from '../context/cart';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { procesarCheckout } from '../services/checkoutService';
 import { ApiError } from '../services/http';
 
@@ -16,9 +17,20 @@ interface DatosEnvio {
 
 const METODOS_PAGO = ["Tarjeta de crédito", "Transferencia bancaria", "Efectivo contra entrega"];
 
+/**
+ * El checkout NO funciona sin conexión, y no es un límite técnico: es una
+ * decisión de producto. La reserva de stock del backend es transaccional
+ * (ACID con `FOR UPDATE` y descuento de stock). Encolar la compra para
+ * mandarla después generaría pedidos fantasma y stock corrupto. Offline se
+ * lee; para escribir, bloqueo explícito.
+ */
+const MENSAJE_SIN_CONEXION =
+  "No tenés conexión: no se puede confirmar el pedido. El checkout requiere conexión porque la reserva de stock es transaccional.";
+
 const Checkout = () => {
   const { user } = useAuth();
   const { cart, totalPrice, clearCart } = useCart();
+  const isOnline = useOnlineStatus();
   const navigate = useNavigate();
 
   const [datos, setDatos] = useState<DatosEnvio>({
@@ -50,6 +62,14 @@ const Checkout = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Guarda de seguridad: sin conexión no se toca el backend. La compra NO
+    // se encola ni se simula: se explica por qué no se puede seguir.
+    if (!isOnline) {
+      setError(MENSAJE_SIN_CONEXION);
+      return;
+    }
+
     setProcesando(true);
     setError(null);
 
@@ -213,11 +233,17 @@ const Checkout = () => {
 
           <button
             type="submit"
-            disabled={procesando}
+            disabled={procesando || !isOnline}
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {procesando ? "Procesando pago..." : "Confirmar Pedido"}
+            {procesando ? "Procesando pago..." : isOnline ? "Confirmar Pedido" : "Sin conexión"}
           </button>
+
+          {!isOnline && (
+            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+              {MENSAJE_SIN_CONEXION}
+            </p>
+          )}
         </form>
 
         {/* ===== RESUMEN DEL PEDIDO ===== */}

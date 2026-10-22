@@ -29,6 +29,25 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Error de RED: la request ni siquiera llegó al servidor.
+ *
+ * Es un tipo aparte de `ApiError` a propósito. `ApiError` significa "el
+ * servidor respondió y dijo que no" (validación, permisos, 404): la UI puede
+ * mostrar el mensaje tal cual. `NetworkError` significa "no hubo respuesta"
+ * (sin conexión, DNS caído, CORS): la UI tiene que ofrecer reintentar,
+ * avisar que se muestran datos guardados o bloquear la acción.
+ *
+ * Convertir un fallo de red en `ApiError` haría que la app le mostrara al
+ * usuario un "Error 500" inexistente.
+ */
+export class NetworkError extends Error {
+  constructor(message?: string, options?: { cause?: unknown }) {
+    super(message ?? 'No se pudo conectar con el servidor.', options);
+    this.name = 'NetworkError';
+  }
+}
+
 // Helpers de almacenamiento de sesión en localStorage
 export const getStoredSession = (): StoredSession | null => {
   try {
@@ -92,10 +111,38 @@ export const apiFetch = async <T = unknown>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (error) {
+    // Fallo de red: offline, DNS caído, CORS,_timeout. El servidor nunca
+    // respondió, así que NO es un ApiError.
+    throw new NetworkError(
+      'No se pudo conectar con el servidor. Revisá tu conexión a internet.',
+      { cause: error },
+    );
+  }
+
+  // El service worker responde con `X-Offline: 1` cuando no tiene nada
+  // cacheado para la consulta. Es un 503 sintético, no una respuesta del
+  // backend: se traduce a NetworkError para que la UI sepa que no hay red.
+  if (response.headers.get('X-Offline') === '1') {
+    let message = 'No se pudo conectar con el servidor y no hay datos guardados para esta consulta.';
+
+    try {
+      const errorJson = await response.json();
+      if (errorJson && typeof errorJson.message === 'string') {
+        message = errorJson.message;
+      }
+    } catch {
+      // El cuerpo no era JSON: se conserva el mensaje por defecto.
+    }
+
+    throw new NetworkError(message);
+  }
 
   if (!response.ok) {
     let message = `Error ${response.status} en ${cleanEndpoint}`;

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import BannerOffline from "./BannerOffline";
+import ActualizacionDisponible from "./ActualizacionDisponible";
 
 const Layout = () => {
   const [isCollapsed, setIsCollapsed] = useState(() => window.innerWidth < 1024);
@@ -48,6 +50,16 @@ const Layout = () => {
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-50">
           <Outlet />
         </main>
+      </div>
+
+      {/* Avisos globales de la PWA: sin conexión y actualizaciones.
+          Van en un contenedor fijo al pie para que se apilen entre sí sin
+          taparse y sin empujar el contenido. `pointer-events-none` en el
+          contenedor para no bloquear los toques del contenido que queda
+          detrás; cada aviso reactiva los eventos por sí mismo. */}
+      <div className="fixed inset-x-0 bottom-0 z-50 flex flex-col gap-2 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 pointer-events-none">
+        <BannerOffline />
+        <ActualizacionDisponible />
       </div>
     </div>
   );

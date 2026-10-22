@@ -1,6 +1,8 @@
 // src/components/MiRed.tsx
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/auth';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import IndicadorDatosGuardados from './IndicadorDatosGuardados';
 import {
   contarRed,
   sumarVentasRed,
@@ -76,6 +78,7 @@ const NodoReferido = ({ nodo }: { nodo: Referido }) => {
 
 const MiRed = () => {
   const { user } = useAuth();
+  const isOnline = useOnlineStatus();
   const [red, setRed] = useState<Referido | null>(null);
   const [comisionesData, setComisionesData] = useState<MisComisionesResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -149,9 +152,12 @@ const MiRed = () => {
     <div className="max-w-6xl mx-auto py-8 px-4">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-2">
-            Mi Red y Comisiones
-          </h1>
+          <div className="flex flex-wrap items-center gap-3 mb-2">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+              Mi Red y Comisiones
+            </h1>
+            {!isOnline && <IndicadorDatosGuardados />}
+          </div>
           <p className="text-slate-500 text-sm">
             Gana el 10% (Nivel 1), 5% (Nivel 2) y 2% (Nivel 3) sobre cada compra generada por tus referidos.
           </p>

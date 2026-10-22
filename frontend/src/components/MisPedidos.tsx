@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getMisPedidos } from "../services/pedidosService";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import IndicadorDatosGuardados from "./IndicadorDatosGuardados";
 import { type Pedido, type EstadoPedido } from "../types/backoffice";
-import { ApiError } from "../services/http";
+import { ApiError, NetworkError } from "../services/http";
 
 const getEstadoBadgeClass = (estado: EstadoPedido) => {
   switch (estado) {
@@ -22,6 +24,7 @@ const getEstadoBadgeClass = (estado: EstadoPedido) => {
 };
 
 const MisPedidos = () => {
+  const isOnline = useOnlineStatus();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -43,6 +46,8 @@ const MisPedidos = () => {
         if (!activo) return;
         if (err instanceof ApiError) {
           setError(err.message);
+        } else if (err instanceof NetworkError) {
+          setError("Sin conexiÃ³n: no se pudieron cargar tus pedidos.");
         } else {
           setError("Error al cargar tus pedidos");
         }
@@ -66,7 +71,10 @@ const MisPedidos = () => {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Mis Pedidos</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Mis Pedidos</h1>
+            {!isOnline && <IndicadorDatosGuardados />}
+          </div>
           <p className="text-sm text-slate-500 mt-1">
             Revisa el historial y estado en tiempo real de tus compras
           </p>

@@ -159,32 +159,32 @@ React SPA (:5173) ──► Caddy/Nginx (U4: proxy inverso + SSL)
 > El frontend no tiene runner de tests. Se instala antes de escribir lógica de caché,
 > para que la política de estrategias quede cubierta por tests desde el primer día.
 
-- [ ] Vitest configurado en `frontend` (versión compatible con la de Vite en uso — verificar peer deps), scripts `npm test` y `npm run test:watch`
-- [ ] `src/pwa/cachePolicy.ts`: funciones puras que resuelven **estrategia + nombre de caché** a partir de la URL de la request (sin I/O, sin estado global)
-- [ ] Tests unitarios de `cachePolicy.ts`: `/api/productos` → NetworkFirst · `/api/productos/:id` → NetworkFirst · `/api/red` → StaleWhileRevalidate · `/api/health` → NetworkOnly · `/api/checkout` y cualquier `POST` → excluida de caché
-- [ ] `npm test` verde y `npm run lint` sin errores ni warnings
+- [x] Vitest configurado en `frontend` (versión compatible con la de Vite en uso — verificar peer deps), scripts `npm test` y `npm run test:watch`
+- [x] `src/pwa/cachePolicy.ts`: funciones puras que resuelven **estrategia + nombre de caché** a partir de la URL de la request (sin I/O, sin estado global)
+- [x] Tests unitarios de `cachePolicy.ts`: `/api/productos` → NetworkFirst · `/api/productos/:id` → NetworkFirst · `/api/red` → StaleWhileRevalidate · `/api/health` → NetworkOnly · `/api/checkout` y cualquier `POST` → excluida de caché
+- [x] `npm test` verde y `npm run lint` sin errores ni warnings
 
 ## PWA-2 · Manifiesto, iconos y metadatos de instalación
 
 > Deja la app declarable. Todavía no instalable: falta el service worker (PWA-3).
 
-- [ ] `frontend/public/manifest.webmanifest`: `name`, `short_name`, `description`, `lang: "es"`, `start_url: "/"`, `scope: "/"`, `display: "standalone"`, `display_override`, `background_color`, `theme_color`, `orientation`, `categories`, `shortcuts` (Tienda, Carrito)
-- [ ] Iconos PNG generados: 192x192, 512x512 y 512x512 con `purpose: "maskable"` (logo con zona segura del 20%) + `apple-touch-icon` 180x180
-- [ ] `index.html`: `<link rel="manifest">`, `<meta name="theme-color">`, `<meta name="color-scheme">`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-title`, `apple-touch-icon` y `viewport` con `viewport-fit=cover`
-- [ ] `vite.config.ts`: `VitePWA` con `registerType: 'prompt'`, `injectManifest`, `includeAssets` (favicon + iconos) y `manifest` consumido desde `public/`
+- [x] `frontend/public/manifest.webmanifest`: `name`, `short_name`, `description`, `lang: "es"`, `start_url: "/"`, `scope: "/"`, `display: "standalone"`, `display_override`, `background_color`, `theme_color`, `orientation`, `categories`, `shortcuts` (Tienda, Carrito)
+- [x] Iconos PNG generados: 192x192, 512x512 y 512x512 con `purpose: "maskable"` (logo con zona segura del 20%) + `apple-touch-icon` 180x180
+- [x] `index.html`: `<link rel="manifest">`, `<meta name="theme-color">`, `<meta name="color-scheme">`, `apple-mobile-web-app-capable`, `apple-mobile-web-app-title`, `apple-touch-icon` y `viewport` con `viewport-fit=cover`
+- [x] `vite.config.ts`: `VitePWA` con `registerType: 'prompt'`, `injectManifest`, `includeAssets` (favicon + iconos) y `manifest` consumido desde `public/`
 - [ ] Manifest validado sin errores en DevTools → Application → Manifest
-- [ ] `npm run build` emite `dist/manifest.webmanifest` y los iconos dentro de `dist/`
+- [x] `npm run build` emite `dist/manifest.webmanifest` y los iconos dentro de `dist/`
 
 ## PWA-3 · Service worker: app shell, navegación y runtime caching
 
 > Con esta fase la app cumple los criterios de instalabilidad de Chrome.
 
-- [ ] `frontend/src/sw.ts` con Workbox (`injectManifest`): precache del build incluyendo `manifest.webmanifest` e íconos
-- [ ] `navigateFallback: '/index.html'` + denylist de `/api` — navegación SPA en deep links (`/producto/:id`, `/carrito`, `/mi-red`)
-- [ ] Runtime caching gobernado por `cachePolicy.ts` (PWA-1): `productos` NetworkFirst (timeout 3s) · `red` StaleWhileRevalidate · `producto/:id` NetworkFirst · fuentes de Google CacheFirst · `/api/health` NetworkOnly
-- [ ] Cachés versionados por hash de build; purga de cachés viejas en `activate` (`cleanupOutdatedCaches`)
-- [ ] Fuentes: auto-alojar Outfit en `public/fonts` (recomendado) o, en su defecto, CacheFirst explícito — la dependencia externa de `fonts.googleapis.com` hoy rompe el offline
-- [ ] SW registrado en `src/main.tsx` vía `virtual:pwa-register`
+- [x] `frontend/src/sw.ts` con Workbox (`injectManifest`): precache del build incluyendo `manifest.webmanifest` e íconos
+- [x] `navigateFallback: '/index.html'` + denylist de `/api` — navegación SPA en deep links (`/producto/:id`, `/carrito`, `/mi-red`)
+- [x] Runtime caching gobernado por `cachePolicy.ts` (PWA-1): `productos` NetworkFirst (timeout 3s) · `red` StaleWhileRevalidate · `producto/:id` NetworkFirst · fuentes de Google CacheFirst · `/api/health` NetworkOnly
+- [x] Cachés versionados por hash de build; purga de cachés viejas en `activate` (`cleanupOutdatedCaches`)
+- [x] Fuentes: auto-alojar Outfit en `public/fonts` (recomendado) o, en su defecto, CacheFirst explícito — la dependencia externa de `fonts.googleapis.com` hoy rompe el offline
+- [x] SW registrado en `src/main.tsx` vía `virtual:pwa-register`
 - [ ] Verificado sobre build real (`npm run build && npm run preview`) — en dev Workbox no emite SW salvo `devOptions.enabled`
 - [ ] **Criterio de instalación:** Chrome ofrece "Instalar app" (manifest + SW activo con handler `fetch`)
 
@@ -192,21 +192,21 @@ React SPA (:5173) ──► Caddy/Nginx (U4: proxy inverso + SSL)
 
 > El service worker guarda datos; la aplicación debe **explicar** que esos datos son cacheados.
 
-- [ ] `services/http.ts`: distinguir fallo de red (`TypeError` de `fetch`) de error HTTP → `NetworkError` tipado; la red caída nunca se reporta como `ApiError` genérico
-- [ ] Hook `useOnlineStatus` (`navigator.onLine` + eventos `online`/`offline`)
-- [ ] Banner global "Sin conexión — mostrando datos guardados" montado en `Layout`
-- [ ] Rutas sin caché offline muestran estado vacío explícito, nunca pantalla en blanco
-- [ ] `Checkout.tsx` **bloquea el submit sin conexión** con mensaje explícito (no encola, no simula)
-- [ ] Distinción visual "dato cacheado" vs "dato real" en `MiRed`, `MisPedidos`, `AdminPedidos` y `Dashboard`
+- [x] `services/http.ts`: distinguir fallo de red (`TypeError` de `fetch`) de error HTTP → `NetworkError` tipado; la red caída nunca se reporta como `ApiError` genérico
+- [x] Hook `useOnlineStatus` (`navigator.onLine` + eventos `online`/`offline`)
+- [x] Banner global "Sin conexión — mostrando datos guardados" montado en `Layout`
+- [x] Rutas sin caché offline muestran estado vacío explícito, nunca pantalla en blanco
+- [x] `Checkout.tsx` **bloquea el submit sin conexión** con mensaje explícito (no encola, no simula)
+- [x] Distinción visual "dato cacheado" vs "dato real" en `MiRed`, `MisPedidos`, `AdminPedidos` y `Dashboard`
 
 ## PWA-5 · Ciclo de vida y actualizaciones controladas
 
 > Actualizar una PWA a mitad de un checkout es pérdida de contexto. El update es explícito.
 
-- [ ] `registerType: 'prompt'` + componente `ActualizacionDisponible` con aviso de versión nueva y botón "Actualizar ahora"
-- [ ] Aviso `offlineReady` ("App lista para usar sin conexión")
-- [ ] `skipWaiting` disparado **solo** por acción del usuario; nunca automático
-- [ ] `controllerchange` → recarga única, preservando el carrito (ya persistido en `localStorage` por usuario)
+- [x] `registerType: 'prompt'` + componente `ActualizacionDisponible` con aviso de versión nueva y botón "Actualizar ahora"
+- [x] Aviso `offlineReady` ("App lista para usar sin conexión")
+- [x] `skipWaiting` disparado **solo** por acción del usuario; nunca automático
+- [x] `controllerchange` → recarga única, preservando el carrito (ya persistido en `localStorage` por usuario)
 
 ## PWA-6 · Despliegue: imagen estática, reverse proxy, TLS y SPA fallback
 

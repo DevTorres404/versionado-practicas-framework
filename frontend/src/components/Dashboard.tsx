@@ -5,6 +5,8 @@ import {
   adminGetTopProductos,
   adminGetTopReferidos,
 } from '../services/adminService';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import IndicadorDatosGuardados from './IndicadorDatosGuardados';
 import {
   type ReporteResumen,
   type TopProducto,
@@ -12,6 +14,7 @@ import {
 } from '../types/backoffice';
 
 const Dashboard = () => {
+  const isOnline = useOnlineStatus();
   const [resumen, setResumen] = useState<ReporteResumen | null>(null);
   const [topProductos, setTopProductos] = useState<TopProducto[]>([]);
   const [topReferidos, setTopReferidos] = useState<TopReferido[]>([]);
@@ -93,9 +96,12 @@ const Dashboard = () => {
   return (
     <div className="max-w-7xl mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Panel de Control Ejecutivo
-        </h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Panel de Control Ejecutivo
+          </h1>
+          {!isOnline && <IndicadorDatosGuardados />}
+        </div>
         <p className="text-slate-500 text-sm mt-1">
           Métricas consolidadas del negocio en tiempo real desde PostgreSQL
         </p>

@@ -5,7 +5,10 @@ import {
   CACHEABLE_METHODS,
   NETWORK_TIMEOUT_SECONDS,
   TTL,
+  USER_CACHE_PREFIXES,
   isApiPath,
+  isUserCacheName,
+  partitionCacheName,
   resolveCacheRule,
 } from './cachePolicy'
 
@@ -26,6 +29,11 @@ describe('resolveCacheRule', () => {
     it('nunca cachea PUT ni DELETE', () => {
       expect(resolveCacheRule('/api/productos/42', 'PUT')).toBeNull()
       expect(resolveCacheRule('/api/productos/42', 'DELETE')).toBeNull()
+    })
+
+    it('nunca cachea un PATCH', () => {
+      expect(resolveCacheRule('/api/productos/42', 'PATCH')).toBeNull()
+      expect(resolveCacheRule('/api/pedidos/7', 'PATCH')).toBeNull()
     })
 
     it('es insensible a mayúsculas en el método', () => {
@@ -171,6 +179,61 @@ describe('isApiPath', () => {
   it('no reconoce paths que no son de la API', () => {
     expect(isApiPath('/assets/index-abc123.js')).toBe(false)
     expect(isApiPath('/')).toBe(false)
+  })
+})
+
+describe('partitionCacheName', () => {
+  it('agrega la partición como sufijo del nombre base', () => {
+    expect(partitionCacheName(CACHE_NAMES.red, 'ana@example.com')).toBe(
+      'multicatalogo-red:ana@example.com',
+    )
+  })
+
+  it('devuelve el nombre base sin sufijo cuando la partición está vacía', () => {
+    expect(partitionCacheName(CACHE_NAMES.red, '')).toBe('multicatalogo-red')
+  })
+
+  it('genera nombres distintos por usuario', () => {
+    expect(partitionCacheName(CACHE_NAMES.red, 'ana@example.com')).not.toBe(
+      partitionCacheName(CACHE_NAMES.red, 'bob@example.com'),
+    )
+  })
+})
+
+describe('USER_CACHE_PREFIXES', () => {
+  it('marca la caché del árbol de referidos como caché por usuario', () => {
+    expect(USER_CACHE_PREFIXES).toContain(CACHE_NAMES.red)
+  })
+
+  it('no incluye las cachés públicas (catálogo, assets, shell)', () => {
+    expect(USER_CACHE_PREFIXES).not.toContain(CACHE_NAMES.productos)
+    expect(USER_CACHE_PREFIXES).not.toContain(CACHE_NAMES.assets)
+    expect(USER_CACHE_PREFIXES).not.toContain(CACHE_NAMES.shell)
+  })
+
+  it('la caché particionada sigue arrancando con el prefijo de usuario', () => {
+    // La purga se hace por prefijo: el nombre particionado tiene que seguir
+    // matcheando el prefijo de la caché base.
+    for (const prefix of USER_CACHE_PREFIXES) {
+      expect(partitionCacheName(prefix, 'ana@example.com').startsWith(prefix)).toBe(true)
+    }
+  })
+})
+
+describe('isUserCacheName', () => {
+  it('reconoce la caché base de la red y su versión particionada', () => {
+    expect(isUserCacheName(CACHE_NAMES.red)).toBe(true)
+    expect(isUserCacheName(partitionCacheName(CACHE_NAMES.red, 'ana@example.com'))).toBe(true)
+  })
+
+  it('no reconoce las cachés públicas', () => {
+    expect(isUserCacheName(CACHE_NAMES.productos)).toBe(false)
+    expect(isUserCacheName(CACHE_NAMES.assets)).toBe(false)
+    expect(isUserCacheName(CACHE_NAMES.shell)).toBe(false)
+  })
+
+  it('no reconoce el marcador de identidad (debe sobrevivir a la purga)', () => {
+    expect(isUserCacheName('multicatalogo-identity')).toBe(false)
   })
 })
 

@@ -1,8 +1,10 @@
 // src/components/AdminPedidos.tsx
 import { useState, useEffect } from "react";
 import { adminGetPedidos, adminCambiarEstadoPedido } from "../services/pedidosService";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import IndicadorDatosGuardados from "./IndicadorDatosGuardados";
 import { type Pedido, type EstadoPedido } from "../types/backoffice";
-import { ApiError } from "../services/http";
+import { ApiError, NetworkError } from "../services/http";
 
 const ESTADOS: EstadoPedido[] = ["pendiente", "preparando", "enviado", "entregado", "cancelado"];
 
@@ -22,6 +24,7 @@ const getBadgeStyle = (estado: EstadoPedido) => {
 };
 
 const AdminPedidos = () => {
+  const isOnline = useOnlineStatus();
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -46,6 +49,7 @@ const AdminPedidos = () => {
       .catch((err) => {
         if (!activo) return;
         if (err instanceof ApiError) setError(err.message);
+        else if (err instanceof NetworkError) setError("Sin conexiÃ³n: no se pudieron cargar los pedidos.");
         else setError("Error al cargar pedidos");
       })
       .finally(() => {
@@ -79,7 +83,10 @@ const AdminPedidos = () => {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Gestión de Pedidos</h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Gestión de Pedidos</h1>
+            {!isOnline && <IndicadorDatosGuardados />}
+          </div>
           <p className="text-sm text-slate-500 mt-1">
             Control de ciclo de vida, despacho y transiciones de estado de compras
           </p>

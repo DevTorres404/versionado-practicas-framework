@@ -48,11 +48,11 @@
 
 > Plan completo, tareas y criterios de aceptación: `REQUIREMENTS_CHECKLIST.md` (raíz) → sección «PWA — PROGRESSIVE WEB APP». Aquí sólo el estado de avance.
 
-- [ ] F5-T1: Vitest instalado en el frontend + `src/pwa/cachePolicy.ts` (funciones puras de estrategia de caché) con sus tests.
-- [ ] F5-T2: `public/manifest.webmanifest` + iconos PNG 192/512/maskable + `apple-touch-icon` + metadatos (`theme-color`, `color-scheme`, `viewport-fit=cover`) + `VitePWA` configurado en `vite.config.ts`.
-- [ ] F5-T3: `src/sw.ts` (Workbox `injectManifest`): precache del app shell, `navigateFallback` con denylist de `/api`, runtime caching sólo de lecturas, cachés versionadas por build.
-- [ ] F5-T4: `NetworkError` tipado en `services/http.ts`, hook `useOnlineStatus`, banner de "sin conexión" en `Layout`, checkout bloqueado sin conexión.
-- [ ] F5-T5: Actualización controlada (`registerType: 'prompt'`, aviso "Actualizar ahora", `skipWaiting` manual) + aviso `offlineReady`.
+- [x] F5-T1: Vitest instalado en el frontend + `src/pwa/cachePolicy.ts` (funciones puras de estrategia de caché) con sus tests.
+- [x] F5-T2: `public/manifest.webmanifest` + iconos PNG 192/512/maskable + `apple-touch-icon` + metadatos (`theme-color`, `color-scheme`, `viewport-fit=cover`) + `VitePWA` configurado en `vite.config.ts`.
+- [x] F5-T3: `src/sw.ts` (Workbox `injectManifest`): precache del app shell, `navigateFallback` con denylist de `/api`, runtime caching sólo de lecturas, cachés versionadas por build.
+- [x] F5-T4: `NetworkError` tipado en `services/http.ts`, hook `useOnlineStatus`, banner de "sin conexión" en `Layout`, checkout bloqueado sin conexión.
+- [x] F5-T5: Actualización controlada (`registerType: 'prompt'`, aviso "Actualizar ahora", `skipWaiting` manual) + aviso `offlineReady`.
 - [ ] F5-T6: `frontend/Dockerfile` + `nginx.conf` con SPA fallback y `sw.js` en `no-cache` + `docker-compose` con `frontend`/`backend`/`postgres`/`redis` + TLS (Caddy) y proxy `/api` en el mismo origen.
 - [ ] F5-T7: Playwright (catálogo offline, checkout bloqueado, aviso de versión nueva) + `README.md` y `docs_ia/PROJECT_MAP.md` actualizados.
 

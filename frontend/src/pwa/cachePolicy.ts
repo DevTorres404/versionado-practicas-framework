@@ -50,6 +50,44 @@ export const CACHE_NAMES = {
   assets: 'multicatalogo-assets',
 } as const
 
+/**
+ * Prefijos de las cachés que contienen datos POR USUARIO.
+ *
+ * `/api/red` devuelve el árbol de referidos del usuario autenticado (va en el
+ * JWT). La Cache API indexa por URL solamente: si dos personas usan el mismo
+ * dispositivo, una cache compartida filtraría el árbol de una a la otra. Las
+ * cachés con estos prefijos se purgan cuando cambia la identidad del usuario.
+ *
+ * El catálogo (`multicatalogo-productos`), los assets y el shell NO entran
+ * acá: son públicos e inmutables, no dependen de quién esté logueado.
+ *
+ * Este valor debe mantenerse sincronizado con `CACHE_NAMES.red`.
+ */
+export const USER_CACHE_PREFIXES = ['multicatalogo-red'] as const
+
+/**
+ * Agrega la partición de usuario al nombre de una caché.
+ *
+ * La partición vacía devuelve el nombre base sin sufijo: así el service worker
+ * puede trabajar con un único formato de nombre y no bifurcar la lógica.
+ */
+export const partitionCacheName = (baseCacheName: string, partition: string): string => {
+  if (!partition) {
+    return baseCacheName
+  }
+  return `${baseCacheName}:${partition}`
+}
+
+/**
+ * ¿El nombre de una caché corresponde a datos por usuario?
+ *
+ * Es el predicado que usa el service worker para purgar: todo lo que matchee
+ * con un prefijo de `USER_CACHE_PREFIXES` contiene datos personales y se
+ * borra cuando cambia la identidad.
+ */
+export const isUserCacheName = (cacheName: string): boolean =>
+  USER_CACHE_PREFIXES.some((prefix) => cacheName.startsWith(prefix))
+
 /** Únicos métodos HTTP cuyas respuestas pueden cachearse. */
 export const CACHEABLE_METHODS = ['GET'] as const
 
@@ -86,7 +124,7 @@ export const isApiPath = (pathname: string): boolean => pathname.startsWith(API_
  * Se usa una base fija (`http://localhost`) para tolerar URLs relativas sin
  * que `new URL` tire.
  */
-const toPathname = (url: string): string => {
+export const pathnameOf = (url: string): string => {
   try {
     return new URL(url, 'http://localhost').pathname
   } catch {
@@ -107,7 +145,7 @@ export const resolveCacheRule = (url: string, method: string): CacheRule | null 
     return null
   }
 
-  const pathname = toPathname(url)
+  const pathname = pathnameOf(url)
 
   // Regla 1 — /api/health es la sonda de vida del backend.
   // Un health check cacheado informaría "todo sano" con el servicio caído,
