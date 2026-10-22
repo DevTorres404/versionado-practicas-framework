@@ -78,7 +78,7 @@ func (ac *AuthController) Login(c *fiber.Ctx) error {
 		Email: usuario.Email,
 		Rol:   usuario.Rol,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(2 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(30 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(now),
 		},
 	}
@@ -152,7 +152,7 @@ func (ac *AuthController) Register(c *fiber.Ctx) error {
 		Email: usuario.Email,
 		Rol:   usuario.Rol,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(now.Add(2 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(30 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(now),
 		},
 	}

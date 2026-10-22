@@ -94,9 +94,6 @@ export const useInstallPrompt = () => {
           if (isMounted) {
             if (relatedApps && relatedApps.length > 0) {
               markInstalled();
-            } else {
-              // Si devolvió lista vacía, la app NO está instalada (o fue desinstalada)
-              markUninstalled();
             }
           }
         } catch {
@@ -190,3 +187,4 @@ export const useInstallPrompt = () => {
     promptInstall,
   };
 };
+

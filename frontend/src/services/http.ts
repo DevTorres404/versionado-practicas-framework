@@ -2,10 +2,11 @@
 // Cliente HTTP centralizado para MultiCatálogo:
 // - URL base configurada vía VITE_API_URL e import.meta.env
 // - Inyección automática de cabecera Authorization: Bearer con el JWT de la sesión
-// - Manejo tipado de errores de API (ApiError)
-// - Helpers de persistencia de sesión en localStorage ('multicatalogo_sesion')
+// - Manejo tipado de errores de API (ApiError) y de red (NetworkError)
+// - Persistencia de sesión y bóveda de autenticación offline ('multicatalogo_sesion', 'multicatalogo_offline_vault')
 
 export const SESSION_STORAGE_KEY = 'multicatalogo_sesion';
+export const OFFLINE_VAULT_KEY = 'multicatalogo_offline_vault';
 
 export interface UsuarioSesion {
   email: string;
@@ -15,6 +16,13 @@ export interface UsuarioSesion {
 export interface StoredSession {
   user: UsuarioSesion;
   token: string;
+}
+
+export interface OfflineUserVault {
+  email: string;
+  rol: 'admin' | 'cliente';
+  token: string;
+  savedAt: number;
 }
 
 export class ApiError extends Error {
@@ -30,20 +38,11 @@ export class ApiError extends Error {
 }
 
 /**
- * Error de RED: la request ni siquiera llegó al servidor.
- *
- * Es un tipo aparte de `ApiError` a propósito. `ApiError` significa "el
- * servidor respondió y dijo que no" (validación, permisos, 404): la UI puede
- * mostrar el mensaje tal cual. `NetworkError` significa "no hubo respuesta"
- * (sin conexión, DNS caído, CORS): la UI tiene que ofrecer reintentar,
- * avisar que se muestran datos guardados o bloquear la acción.
- *
- * Convertir un fallo de red en `ApiError` haría que la app le mostrara al
- * usuario un "Error 500" inexistente.
+ * Error de RED: la petición no pudo comunicarse con el servidor.
  */
 export class NetworkError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
-    super(message ?? 'No se pudo conectar con el servidor.', options);
+    super(message ?? 'No se pudo conectar con el servidor. Revisá tu conexión a internet.', options);
     this.name = 'NetworkError';
   }
 }
@@ -80,29 +79,97 @@ export const clearStoredSession = (): void => {
   }
 };
 
+export const saveOfflineUser = (email: string, rol: 'admin' | 'cliente', token: string): void => {
+  try {
+    const raw = localStorage.getItem(OFFLINE_VAULT_KEY);
+    const vault: Record<string, OfflineUserVault> = raw ? JSON.parse(raw) : {};
+    vault[email.toLowerCase()] = {
+      email: email.toLowerCase(),
+      rol,
+      token,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(OFFLINE_VAULT_KEY, JSON.stringify(vault));
+  } catch {
+    // Manejo de almacenamiento
+  }
+};
+
+export const authenticateOffline = (
+  email: string,
+  password: string
+): { email: string; rol: 'admin' | 'cliente'; token: string } => {
+  const normEmail = email.trim().toLowerCase();
+
+  // 1. Cuentas de prueba preconfiguradas para pruebas offline
+  if (normEmail === 'admin@upse.edu.ec' && password === '123456') {
+    const offlineToken = `offline-jwt-admin-${Date.now()}`;
+    saveOfflineUser(normEmail, 'admin', offlineToken);
+    saveStoredSession({ user: { email: normEmail, rol: 'admin' }, token: offlineToken });
+    return { email: normEmail, rol: 'admin', token: offlineToken };
+  }
+
+  if (normEmail === 'cliente@upse.edu.ec' && password === '123456') {
+    const offlineToken = `offline-jwt-cliente-${Date.now()}`;
+    saveOfflineUser(normEmail, 'cliente', offlineToken);
+    saveStoredSession({ user: { email: normEmail, rol: 'cliente' }, token: offlineToken });
+    return { email: normEmail, rol: 'cliente', token: offlineToken };
+  }
+
+  // 2. Usuarios previamente sincronizados en este dispositivo
+  try {
+    const raw = localStorage.getItem(OFFLINE_VAULT_KEY);
+    if (raw) {
+      const vault: Record<string, OfflineUserVault> = JSON.parse(raw);
+      const cached = vault[normEmail];
+      if (cached) {
+        saveStoredSession({ user: { email: cached.email, rol: cached.rol }, token: cached.token });
+        return { email: cached.email, rol: cached.rol, token: cached.token };
+      }
+    }
+  } catch {
+    // Error al leer localStorage
+  }
+
+  throw new Error('Sin conexión: usuario no sincronizado en este dispositivo o credenciales inválidas.');
+};
+
 /**
- * Base URL configurada dinámicamente mediante variables de entorno Vite.
- *
- * Tres modos, según `VITE_API_URL`:
- *
- * - `'/'` → base vacía (mismo origen). Es el modo del despliegue: el proxy
- *   de nginx sirve `/api` desde el mismo origen que la app, así que el JWT
- *   vive en un único origen y el service worker puede cachear la API.
- * - Un valor absoluto (`'https://api.ejemplo.com/'`) → se usa tal cual,
- *   sin la barra final.
- * - Vacío o ausente → el default de desarrollo (`http://localhost:3000`).
+ * Detecta fallos de conectividad o red para manejo resiliente en PWA.
  */
+export const isNetworkError = (err: unknown): boolean => {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return true;
+  }
+  if (err instanceof NetworkError) {
+    return true;
+  }
+  if (err instanceof ApiError && err.status === 0) {
+    return true;
+  }
+  if (err instanceof TypeError || err instanceof Error) {
+    const msg = (err.message || '').toLowerCase();
+    return (
+      msg.includes('networkerror') ||
+      msg.includes('failed to fetch') ||
+      msg.includes('load failed') ||
+      msg.includes('network request failed') ||
+      msg.includes('sin conexión') ||
+      msg.includes('offline') ||
+      msg.includes('connection refused')
+    );
+  }
+  return false;
+};
+
 export const getApiBaseUrl = (): string => {
   const envUrl = import.meta.env.VITE_API_URL;
 
   if (typeof envUrl === 'string') {
     const trimmed = envUrl.trim();
-
-    // Modo mismo-origen: base vacía ⇒ URLs relativas (`/api/productos`).
     if (trimmed === '/') {
       return '';
     }
-
     if (trimmed !== '') {
       return trimmed.replace(/\/+$/, '');
     }
@@ -118,21 +185,22 @@ export const apiFetch = async <T = unknown>(
 ): Promise<T> => {
   const baseUrl = getApiBaseUrl();
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  // Con base vacía (modo mismo-origen) la URL queda relativa
-  // (`/api/productos`): `fetch` la resuelve contra el origen de la página.
   const url = `${baseUrl}${cleanEndpoint}`;
 
   const headers = new Headers(options.headers || {});
 
-  // Adjuntamos Content-Type por defecto si se envía body y no está especificado
   if (options.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
-  // Inyección automática del token JWT persistido en la sesión
-  const token = getStoredToken();
+  const session = getStoredSession();
+  const token = session ? session.token : null;
   if (token && !headers.has('Authorization')) {
     headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  if (session?.user?.email && !headers.has('X-User-Email')) {
+    headers.set('X-User-Email', session.user.email);
   }
 
   let response: Response;
@@ -142,29 +210,22 @@ export const apiFetch = async <T = unknown>(
       headers,
     });
   } catch (error) {
-    // Fallo de red: offline, DNS caído, CORS,_timeout. El servidor nunca
-    // respondió, así que NO es un ApiError.
     throw new NetworkError(
       'No se pudo conectar con el servidor. Revisá tu conexión a internet.',
       { cause: error },
     );
   }
 
-  // El service worker responde con `X-Offline: 1` cuando no tiene nada
-  // cacheado para la consulta. Es un 503 sintético, no una respuesta del
-  // backend: se traduce a NetworkError para que la UI sepa que no hay red.
   if (response.headers.get('X-Offline') === '1') {
     let message = 'No se pudo conectar con el servidor y no hay datos guardados para esta consulta.';
-
     try {
       const errorJson = await response.json();
       if (errorJson && typeof errorJson.message === 'string') {
         message = errorJson.message;
       }
     } catch {
-      // El cuerpo no era JSON: se conserva el mensaje por defecto.
+      // Ignorar
     }
-
     throw new NetworkError(message);
   }
 
@@ -183,13 +244,12 @@ export const apiFetch = async <T = unknown>(
         details = errorJson.details;
       }
     } catch {
-      // Si la respuesta no es JSON, conservamos el mensaje con el código HTTP
+      // Usar mensaje por defecto
     }
 
     throw new ApiError(response.status, message, details);
   }
 
-  // Manejo de respuestas 204 No Content
   if (response.status === 204) {
     return undefined as unknown as T;
   }

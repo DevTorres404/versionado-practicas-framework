@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth, type Rol } from "../context/auth";
-import { apiFetch, ApiError } from "../services/http";
+import { apiFetch, ApiError, authenticateOffline, saveOfflineUser, isNetworkError } from "../services/http";
 import { BotonInstalarApp } from "./BotonInstalarApp";
 
 interface LoginResponse {
@@ -25,10 +25,26 @@ const Login = () => {
     setError("");
 
     try {
-      const data = await apiFetch<LoginResponse>("/api/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
+      let data: { email: string; rol: string; token: string };
+
+      if (!navigator.onLine) {
+        data = authenticateOffline(email, password);
+      } else {
+        try {
+          data = await apiFetch<LoginResponse>("/api/login", {
+            method: "POST",
+            body: JSON.stringify({ email, password }),
+          });
+
+          saveOfflineUser(data.email, data.rol === "admin" ? "admin" : "cliente", data.token);
+        } catch (fetchErr: unknown) {
+          if (isNetworkError(fetchErr)) {
+            data = authenticateOffline(email, password);
+          } else {
+            throw fetchErr;
+          }
+        }
+      }
 
       const rol: Rol = data.rol === "admin" ? "admin" : "cliente";
       login({ email: data.email, rol }, data.token);
@@ -197,3 +213,4 @@ const Login = () => {
 };
 
 export default Login;
+
