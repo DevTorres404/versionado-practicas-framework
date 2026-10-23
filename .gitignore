@@ -42,3 +42,7 @@ desktop.ini
 *.ipynb
 .ipynb_checkpoints/
 odd/
+
+# Database seeds (local execution only, do not upload)
+backend/database/seed_demo.sql
+backend/database/*seed*.sql
