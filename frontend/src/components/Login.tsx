@@ -63,58 +63,64 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4 py-8">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-        {/* Cabecera Minimalista */}
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-indigo-50/40 px-4 py-10 overflow-hidden">
+      {/* Resplandor ambiental de fondo */}
+      <div className="absolute -top-32 -left-32 w-80 h-80 bg-indigo-200/35 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-cyan-200/30 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-200/80 p-8 sm:p-9 transition-all">
+        {/* Cabecera de Marca */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <img
-              src="/logo-torres.png"
-              alt="Logotipo Torres"
-              className="w-20 h-20 object-contain"
-            />
+            <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 ring-1 ring-slate-900/5">
+              <img
+                src="/logo-torres.png"
+                alt="Logotipo Torres"
+                className="w-16 h-16 object-contain"
+              />
+            </div>
           </div>
-          <div className="inline-block px-3 py-1 bg-cyan-50 border border-cyan-200 rounded-full mb-3">
-            <span className="text-xs font-bold text-cyan-800 tracking-wider uppercase">Cosmética & Red</span>
-          </div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
             MultiCatálogo Torres
-          </h2>
-          <p className="text-slate-500 mt-1 text-sm font-medium">
+          </h1>
+          <p className="text-slate-500 mt-1.5 text-sm font-medium">
             Ingresa a tu cuenta para continuar
           </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-700 p-3.5 rounded-lg text-sm mb-6 text-center border border-red-200 font-medium">
-            {error}
+          <div className="flex items-center gap-2.5 bg-rose-50 text-rose-700 p-3.5 rounded-xl text-sm mb-6 border border-rose-200 font-medium animate-fadeIn">
+            <svg className="w-4 h-4 shrink-0 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Correo Electrónico
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-[#0a196f] focus:ring-1 focus:ring-[#0a196f] outline-none transition text-slate-800 placeholder-slate-400 text-sm font-medium"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/60 focus:bg-white focus:border-[#0a196f] focus:ring-4 focus:ring-[#0a196f]/10 outline-none transition text-slate-800 placeholder-slate-400 text-sm font-medium"
               placeholder="admin@upse.edu.ec"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Contraseña
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-[#0a196f] focus:ring-1 focus:ring-[#0a196f] outline-none transition text-slate-800 placeholder-slate-400 text-sm font-medium"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/60 focus:bg-white focus:border-[#0a196f] focus:ring-4 focus:ring-[#0a196f]/10 outline-none transition text-slate-800 placeholder-slate-400 text-sm font-medium"
               placeholder="••••••"
               required
             />
@@ -123,9 +129,19 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#0a196f] hover:bg-[#071355] text-white font-bold py-3.5 px-4 rounded-lg transition-colors disabled:opacity-50 min-h-[46px] tracking-wide cursor-pointer"
+            className="w-full bg-[#0a196f] hover:bg-[#071355] active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl transition-all duration-150 disabled:opacity-50 min-h-[48px] tracking-wide cursor-pointer shadow-md shadow-[#0a196f]/20 hover:shadow-lg hover:shadow-[#0a196f]/25 flex items-center justify-center gap-2"
           >
-            {loading ? "Validando credenciales..." : "Iniciar Sesión"}
+            {loading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Validando credenciales...</span>
+              </>
+            ) : (
+              "Iniciar Sesión"
+            )}
           </button>
         </form>
 
@@ -140,7 +156,7 @@ const Login = () => {
         <BotonInstalarApp variant="login" />
 
         {/* Cuentas de Prueba sin emojis y con autocompletado */}
-        <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
+        <div className="mt-6 p-4 bg-slate-50/90 rounded-xl border border-slate-200 text-xs text-slate-600">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,33 +166,33 @@ const Login = () => {
                 Credenciales de prueba
               </span>
             </div>
-            <span className="text-[10px] text-slate-600 font-medium">
+            <span className="text-[10px] text-slate-500 font-medium">
               Clic para autocompletar
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button
               type="button"
               onClick={() => {
                 setEmail("admin@upse.edu.ec");
                 setPassword("123456");
               }}
-              className="text-left p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer group shadow-xs"
+              className="text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-[#0a196f]/40 hover:bg-slate-50 hover:shadow-xs transition-all duration-150 cursor-pointer group"
               title="Cargar credenciales de Administrador"
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-[#0a196f] text-white">
                   Admin
                 </span>
-                <span className="text-[10px] font-medium text-slate-600 group-hover:text-[#0a196f] transition-colors">
+                <span className="text-[10px] font-medium text-slate-500 group-hover:text-[#0a196f] transition-colors">
                   Autocompletar
                 </span>
               </div>
               <p className="font-mono text-xs text-slate-800 font-semibold truncate">
                 admin@upse.edu.ec
               </p>
-              <p className="font-mono text-[11px] text-slate-700 mt-0.5">
+              <p className="font-mono text-[11px] text-slate-600 mt-0.5">
                 Clave: <span className="font-medium text-slate-700">123456</span>
               </p>
             </button>
@@ -187,21 +203,21 @@ const Login = () => {
                 setEmail("cliente@upse.edu.ec");
                 setPassword("123456");
               }}
-              className="text-left p-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer group shadow-xs"
+              className="text-left p-3 rounded-xl border border-slate-200 bg-white hover:border-cyan-600/40 hover:bg-slate-50 hover:shadow-xs transition-all duration-150 cursor-pointer group"
               title="Cargar credenciales de Cliente"
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-cyan-700 text-white">
                   Cliente
                 </span>
-                <span className="text-[10px] font-medium text-slate-600 group-hover:text-cyan-800 transition-colors">
+                <span className="text-[10px] font-medium text-slate-500 group-hover:text-cyan-800 transition-colors">
                   Autocompletar
                 </span>
               </div>
               <p className="font-mono text-xs text-slate-800 font-semibold truncate">
                 cliente@upse.edu.ec
               </p>
-              <p className="font-mono text-[11px] text-slate-700 mt-0.5">
+              <p className="font-mono text-[11px] text-slate-600 mt-0.5">
                 Clave: <span className="font-medium text-slate-700">123456</span>
               </p>
             </button>
