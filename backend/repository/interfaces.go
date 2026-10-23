@@ -27,6 +27,7 @@ type DBRepository interface {
 	BuscarUsuarioPorID(id int) (*models.Usuario, error)
 	BuscarUsuarioPorCredenciales(email, password string) (*models.Usuario, error)
 	RegistrarUsuario(ctx context.Context, req *models.RegisterRequest) (*models.Usuario, error)
+	ObtenerUsuarios(q string, page, limit int) ([]models.UsuarioAdmin, int, error)
 
 	// Catálogo de Productos (CRUD y Paginación)
 	ObtenerProductos(soloActivos bool, q string, page, limit int) ([]models.Producto, int, error)

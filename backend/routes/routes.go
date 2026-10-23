@@ -18,6 +18,7 @@ func SetupRoutes(
 	checkoutCtrl *controllers.CheckoutController,
 	liqCtrl *controllers.LiquidacionController,
 	repCtrl *controllers.ReporteController,
+	userCtrl *controllers.UsuarioController,
 	healthCtrl *controllers.HealthController,
 	jwtSecret string,
 ) {
@@ -36,6 +37,7 @@ func SetupRoutes(
 
 	// Catálogo administrativo (CRUD y listado completo)
 	app.Get("/api/admin/productos", requireAuth, requireAdmin, prodCtrl.AdminGetProductos)
+	app.Get("/api/admin/usuarios", requireAuth, requireAdmin, userCtrl.AdminGetUsuarios)
 	app.Post("/api/productos", requireAuth, requireAdmin, prodCtrl.CrearProducto)
 	app.Put("/api/productos/:id", requireAuth, requireAdmin, prodCtrl.ActualizarProducto)
 	app.Delete("/api/productos/:id", requireAuth, requireAdmin, prodCtrl.DesactivarProducto)

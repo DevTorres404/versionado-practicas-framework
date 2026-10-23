@@ -48,6 +48,20 @@ export interface Pedido {
   items?: PedidoItem[];
 }
 
+export interface UsuarioAdmin {
+  id: number;
+  nombre: string;
+  email: string;
+  rol: 'admin' | 'cliente';
+  activo: boolean;
+  referido_id?: number;
+  nodo_nombre?: string;
+  nivel: number;
+  ventas: number;
+  pedidos: number;
+  creado_en?: string;
+}
+
 export interface Comision {
   id: number;
   pedido_id: number;

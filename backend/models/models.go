@@ -40,6 +40,22 @@ type Usuario struct {
 	CreadoEn   string `json:"creado_en,omitempty"`
 }
 
+// UsuarioAdmin extiende la cuenta con datos del nodo de red y métricas de compra
+// para el listado administrativo. Nunca expone la contraseña.
+type UsuarioAdmin struct {
+	ID         int     `json:"id"`
+	Nombre     string  `json:"nombre"`
+	Email      string  `json:"email"`
+	Rol        string  `json:"rol"`
+	Activo     bool    `json:"activo"`
+	ReferidoID *int    `json:"referido_id,omitempty"`
+	NodoNombre string  `json:"nodo_nombre"`
+	Nivel      int     `json:"nivel"`
+	Ventas     float64 `json:"ventas"`
+	Pedidos    int     `json:"pedidos"`
+	CreadoEn   string  `json:"creado_en,omitempty"`
+}
+
 // Referido representa un nodo de la red multinivel MLM.
 type Referido struct {
 	ID       int        `json:"id"`

@@ -109,6 +109,33 @@ func TestAdminProductosCRUD(t *testing.T) {
 	}
 }
 
+func TestAdminUsuarios(t *testing.T) {
+	app := fiber.New()
+	mockRepo := &MockDBRepository{}
+	userCtrl := NewUsuarioController(mockRepo)
+
+	app.Get("/api/admin/usuarios", userCtrl.AdminGetUsuarios)
+
+	req := httptest.NewRequest("GET", "/api/admin/usuarios?page=1&limit=10", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("app.Test error: %v", err)
+	}
+
+	if resp.StatusCode != fiber.StatusOK {
+		t.Errorf("admin get usuarios status = %d, want %d", resp.StatusCode, fiber.StatusOK)
+	}
+
+	var resMap map[string]interface{}
+	_ = json.NewDecoder(resp.Body).Decode(&resMap)
+	if resMap["data"] == nil {
+		t.Errorf("expected data in usuarios response")
+	}
+	if resMap["total"] == nil {
+		t.Errorf("expected total in usuarios response")
+	}
+}
+
 func TestPedidoTransicionesEstado(t *testing.T) {
 	app := fiber.New()
 	mockRepo := &MockDBRepository{}

@@ -10,6 +10,7 @@ import MiRed from './components/MiRed';
 import MisPedidos from './components/MisPedidos';
 import AdminProductos from './components/AdminProductos';
 import AdminPedidos from './components/AdminPedidos';
+import AdminUsuarios from './components/AdminUsuarios';
 import AdminLiquidaciones from './components/AdminLiquidaciones';
 import Carrito from './components/Carrito';
 import Checkout from './components/Checkout';
@@ -78,6 +79,7 @@ function App() {
                   <Route index element={<Dashboard />} />
                   <Route path="admin/productos" element={<AdminProductos />} />
                   <Route path="admin/pedidos" element={<AdminPedidos />} />
+                  <Route path="admin/usuarios" element={<AdminUsuarios />} />
                   <Route path="admin/liquidaciones" element={<AdminLiquidaciones />} />
                 </Route>
 

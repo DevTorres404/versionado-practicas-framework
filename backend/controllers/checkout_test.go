@@ -69,6 +69,23 @@ func (m *MockDBRepository) ObtenerProductos(soloActivos bool, q string, page, li
 	return nil, 0, nil
 }
 
+func (m *MockDBRepository) ObtenerUsuarios(q string, page, limit int) ([]models.UsuarioAdmin, int, error) {
+	usuarios := []models.UsuarioAdmin{
+		{
+			ID:         1,
+			Nombre:     "Wilter Villón",
+			Email:      "admin@upse.edu.ec",
+			Rol:        "admin",
+			Activo:     true,
+			NodoNombre: "Tú",
+			Nivel:      0,
+			Ventas:     5400,
+			Pedidos:    5,
+		},
+	}
+	return usuarios, len(usuarios), nil
+}
+
 func (m *MockDBRepository) ObtenerProductoPorID(id int) (*models.Producto, error) {
 	return nil, nil
 }

@@ -94,10 +94,11 @@ func main() {
 	checkoutCtrl := controllers.NewCheckoutController(repo, cache)
 	liqCtrl := controllers.NewLiquidacionController(repo)
 	repCtrl := controllers.NewReporteController(repo)
+	userCtrl := controllers.NewUsuarioController(repo)
 	healthCtrl := controllers.NewHealthController(repo, cache)
 
 	// Inyectamos los controladores y la clave JWT en el router
-	routes.SetupRoutes(app, authCtrl, prodCtrl, redCtrl, pedidoCtrl, checkoutCtrl, liqCtrl, repCtrl, healthCtrl, jwtSecret)
+	routes.SetupRoutes(app, authCtrl, prodCtrl, redCtrl, pedidoCtrl, checkoutCtrl, liqCtrl, repCtrl, userCtrl, healthCtrl, jwtSecret)
 
 	// Escuchamos en un goroutine para poder apagar el servidor con señales (SIGINT/SIGTERM).
 	listenErr := make(chan error, 1)

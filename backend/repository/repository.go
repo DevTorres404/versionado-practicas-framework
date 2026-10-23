@@ -228,6 +228,76 @@ func (r *Repository) RegistrarUsuario(ctx context.Context, req *models.RegisterR
 	}, nil
 }
 
+// ObtenerUsuarios lista las cuentas con su nodo de red y métricas de compra para el panel admin.
+func (r *Repository) ObtenerUsuarios(q string, page, limit int) ([]models.UsuarioAdmin, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	offset := (page - 1) * limit
+
+	whereClause := "1=1"
+	args := []interface{}{}
+	argIdx := 1
+
+	if strings.TrimSpace(q) != "" {
+		whereClause = fmt.Sprintf("(u.nombre ILIKE $%d OR u.email ILIKE $%d)", argIdx, argIdx)
+		args = append(args, "%"+strings.TrimSpace(q)+"%")
+		argIdx++
+	}
+
+	const fromUsuarios = "FROM usuarios u LEFT JOIN referidos r ON r.id = u.referido_id"
+
+	// Conteo total
+	var total int
+	countQuery := fmt.Sprintf("SELECT COUNT(*) %s WHERE %s", fromUsuarios, whereClause)
+	if err := r.db.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("conteo usuarios: %w", err)
+	}
+
+	// Consulta paginada
+	query := fmt.Sprintf(`
+		SELECT u.id, u.nombre, u.email, u.rol, u.activo, u.referido_id,
+		       COALESCE(r.nombre, 'Tú'), COALESCE(r.nivel, 0), COALESCE(r.ventas, 0),
+		       (SELECT COUNT(*) FROM pedidos p WHERE p.usuario_id = u.id),
+		       COALESCE(TO_CHAR(u.creado_en, 'YYYY-MM-DD HH24:MI:SS'), '')
+		  %s
+		 WHERE %s
+		 ORDER BY u.id
+		 LIMIT $%d OFFSET $%d
+	`, fromUsuarios, whereClause, argIdx, argIdx+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	usuarios := make([]models.UsuarioAdmin, 0)
+	for rows.Next() {
+		var u models.UsuarioAdmin
+		var refID sql.NullInt64
+
+		if err := rows.Scan(
+			&u.ID, &u.Nombre, &u.Email, &u.Rol, &u.Activo, &refID,
+			&u.NodoNombre, &u.Nivel, &u.Ventas, &u.Pedidos, &u.CreadoEn,
+		); err != nil {
+			return nil, 0, fmt.Errorf("escanear usuario: %w", err)
+		}
+
+		if refID.Valid {
+			id := int(refID.Int64)
+			u.ReferidoID = &id
+		}
+		usuarios = append(usuarios, u)
+	}
+
+	return usuarios, total, rows.Err()
+}
+
 // ObtenerProductos devuelve productos con filtros de búsqueda, estado y paginación.
 func (r *Repository) ObtenerProductos(soloActivos bool, q string, page, limit int) ([]models.Producto, int, error) {
 	if page < 1 {
