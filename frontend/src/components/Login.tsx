@@ -63,12 +63,12 @@ const Login = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-indigo-50/40 px-4 py-10 overflow-hidden">
-      {/* Resplandor ambiental de fondo */}
-      <div className="absolute -top-32 -left-32 w-80 h-80 bg-indigo-200/35 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-cyan-200/30 rounded-full blur-3xl pointer-events-none" />
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-[#060e3b] via-[#0a196f] to-[#03091e] px-4 py-10 overflow-hidden">
+      {/* Resplandor ambiental de marca (índigo y turquesa) */}
+      <div className="absolute top-10 -left-20 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 -right-20 w-96 h-96 bg-indigo-500/30 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="relative w-full max-w-md bg-white/95 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-200/70 border border-slate-200/80 p-8 sm:p-9 transition-all">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl shadow-black/30 border border-white/40 p-8 sm:p-9 transition-all">
         {/* Cabecera de Marca */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
