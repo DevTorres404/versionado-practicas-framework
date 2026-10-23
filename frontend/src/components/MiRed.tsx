@@ -288,7 +288,7 @@ const MiRed = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-semibold">
-                      {(com.porcentaje * 100).toFixed(0)}%
+                      {com.porcentaje.toFixed(0)}%
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-bold text-emerald-600">
                       ${com.monto.toFixed(2)}
